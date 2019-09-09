@@ -26,8 +26,10 @@ namespace Lab6_Pub
         public const int MAX_GLASSES = 8;
         public const int MAX_CHAIRS = 9;
         public int openTime;
-        public bool open = false;
+        public static bool open = false;
         public Timer timer;
+        public static Bouncer bouncer = new Bouncer();
+        public List<Patron> patrons = new List<Patron>();
 
         public MainWindow()
         {
@@ -43,6 +45,8 @@ namespace Lab6_Pub
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
+            lbPatrons.ItemsSource = patrons;
+            lbPatrons.DisplayMemberPath = "PatronName";
 
         }
 
@@ -50,6 +54,15 @@ namespace Lab6_Pub
         {
             this.Dispatcher.Invoke(() =>
             {
+                Patron patron = bouncer.CreatePatron();
+                if (patron != null)
+                {
+                    patrons.Add(patron);
+                    lbPatrons.Items.Refresh();
+                }
+                
+                
+
                 lblOpen.Content = "Closes in: " + openTime;
                 openTime -= 1;
             });
