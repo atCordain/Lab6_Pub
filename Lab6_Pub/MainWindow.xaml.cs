@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Timers;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,9 +21,81 @@ namespace Lab6_Pub
     /// </summary>
     public partial class MainWindow : Window
     {
+        public const int TIMESCALE = 1;
+        public const int MAX_OPENTIME = 120;
+        public const int MAX_GLASSES = 8;
+        public const int MAX_CHAIRS = 9;
+        public int openTime;
+        public bool open = false;
+        public Timer timer;
+
         public MainWindow()
         {
             InitializeComponent();
+            int glasses = MAX_GLASSES;
+            int chairs = MAX_CHAIRS;
+            openTime = MAX_OPENTIME;
+
+            timer = new Timer(1000d);
+            timer.Elapsed += Timer_Elapsed;
+
+            btnPauseBartender.Click += BtnPauseBartender_Click;
+            btnPauseWaitress.Click += BtnPauseWaitress_Click;
+            btnPausePatrons.Click += BtnPausePatrons_Click;
+            btnOpenClose.Click += BtnOpenClose_Click;
+
+        }
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                lblOpen.Content = "Closes in: " + openTime;
+                openTime -= 1;
+            });
+            
+        }
+
+        private void BtnPausePatrons_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
+        {
+            if (open)
+            {
+                CloseBar();
+            }
+            else
+            {
+                OpenBar();
+            }
+             
+        }
+
+        private void CloseBar()
+        {
+            // AVVAKTA THREADS
+            open = false;
+            timer.Stop();
+        }
+
+        private void OpenBar()
+        {
+            // STARTA THREADS 
+            open = true;
+            timer.Start();
+        }
+
+        private void BtnPauseBartender_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }

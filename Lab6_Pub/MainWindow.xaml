@@ -5,22 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lab6_Pub"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="1000">
+        Title="MainWindow" Height="500" Width="1010">
     <Grid>
-        <ListBox HorizontalAlignment="Left" Height="250" Margin="50,100,0,0" VerticalAlignment="Top" Width="200"/>
-        <ListBox HorizontalAlignment="Left" Height="250" Margin="300,100,0,0" VerticalAlignment="Top" Width="200"/>
-        <ListBox HorizontalAlignment="Left" Height="250" Margin="550,100,0,0" VerticalAlignment="Top" Width="200"/>
+        <ListBox x:Name="lbBartender" HorizontalAlignment="Left" Height="250" Margin="50,100,0,0" VerticalAlignment="Top" Width="200"/>
+        <ListBox x:Name="lbWaitress" HorizontalAlignment="Left" Height="250" Margin="300,100,0,0" VerticalAlignment="Top" Width="200"/>
+        <ListBox x:Name="lbPatrons" HorizontalAlignment="Left" Height="250" Margin="550,100,0,0" VerticalAlignment="Top" Width="200"/>
         <Label Content="Bartender" HorizontalAlignment="Left" Margin="50,50,0,0" VerticalAlignment="Top"/>
         <Label Content="Waitress" HorizontalAlignment="Left" Margin="300,50,0,0" VerticalAlignment="Top"/>
         <Label Content="Patrons" HorizontalAlignment="Left" Margin="550,50,0,0" VerticalAlignment="Top"/>
-        <Button Content="Pause/Continue" HorizontalAlignment="Left" Margin="50,360,0,0" VerticalAlignment="Top" Width="200"/>
-        <Button Content="Pause/Continue" HorizontalAlignment="Left" Margin="300,360,0,0" VerticalAlignment="Top" Width="200"/>
-        <Button Content="Pause/Continue" HorizontalAlignment="Left" Margin="550,360,0,0" VerticalAlignment="Top" Width="200"/>
-        <Button Content="Panic (Stop all threads)" HorizontalAlignment="Left" Margin="760,360,0,0" VerticalAlignment="Top" Width="200"/>
-        <Button Content="Open/Close bar" HorizontalAlignment="Left" Margin="50,390,0,0" VerticalAlignment="Top" Width="700"/>
-        <Label Content="There are X Patrons in the bar" HorizontalAlignment="Left" Margin="760,100,0,0" VerticalAlignment="Top" Width="200"/>
-        <Label Content="There are X free Glasses (X Total)" HorizontalAlignment="Left" Margin="760,130,0,0" VerticalAlignment="Top" Width="200"/>
-        <Label Content="There are X free Tables (X Total)" HorizontalAlignment="Left" Margin="760,160,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnPauseBartender" Content="Pause/Continue" HorizontalAlignment="Left" Margin="50,360,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnPauseWaitress" Content="Pause/Continue" HorizontalAlignment="Left" Margin="300,360,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnPausePatrons" Content="Pause/Continue" HorizontalAlignment="Left" Margin="550,360,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnStopAll" Content="Panic (Stop all threads)" HorizontalAlignment="Left" Margin="760,360,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnOpenClose" Content="Open/Close bar" HorizontalAlignment="Left" Margin="50,390,0,0" VerticalAlignment="Top" Width="700"/>
+        <Label x:Name="lblPatrons" Content="There are X Patrons in the bar" HorizontalAlignment="Left" Margin="760,100,0,0" VerticalAlignment="Top" Width="200"/>
+        <Label x:Name="lblGlasses" Content="There are X free Glasses (X Total)" HorizontalAlignment="Left" Margin="760,130,0,0" VerticalAlignment="Top" Width="200"/>
+        <Label x:Name="lblTables" Content="There are X free Tables (X Total)" HorizontalAlignment="Left" Margin="760,160,0,0" VerticalAlignment="Top" Width="200"/>
+        <Label x:Name="lblOpen" Content="Closes in: " HorizontalAlignment="Left" Margin="760,50,0,0" VerticalAlignment="Top" Width="200"/>
 
     </Grid>
 </Window>
