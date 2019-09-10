@@ -33,7 +33,6 @@ namespace Lab6_Pub
         internal const int MIN_ENTRYTIME = 3;
         internal Random random = new Random();
         internal int timeToEntry = 0;
-        public int openTime;
         public static bool open = false;
         public static Bouncer bouncer = new Bouncer();
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
@@ -45,7 +44,6 @@ namespace Lab6_Pub
             InitializeComponent();
             int glasses = MAX_GLASSES;
             int chairs = MAX_CHAIRS;
-            openTime = MAX_OPENTIME;
 
             Waitress waitress1 = new Waitress();
 
@@ -145,13 +143,13 @@ namespace Lab6_Pub
             {
                 Waitress.StartWaitress();
 
-                Thread pickUpGlasses = new Thread(Waitress.PickUpglasses);
-                Thread washGlasses = new Thread(Waitress.WashGlases);
-                Thread putOnShelf = new Thread(Waitress.PutOnShelf);
+                //Thread pickUpGlasses = new Thread(Waitress.PickUpglasses);
+                //Thread washGlasses = new Thread(Waitress.WashGlases);
+                //Thread putOnShelf = new Thread(Waitress.PutOnShelf);
 
-                pickUpGlasses.Start();
-                washGlasses.Start();
-                putOnShelf.Start();
+                //pickUpGlasses.Start();
+                //washGlasses.Start();
+                //putOnShelf.Start();
             }
         }
     }
