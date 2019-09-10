@@ -9,8 +9,8 @@ namespace Lab6_Pub
 {
     internal class Waitress
     {
-        const int TIMEPICKGLAS = 10; 
-        const int TIMETOWASH = 15;
+        const int TIMEPICKGLAS = 3; 
+        const int TIMETOWASH = 3;
         public static int glassDelay;
         public static int WashDelay;
 
@@ -33,7 +33,7 @@ namespace Lab6_Pub
 
         internal static void PutOnShelf()
         {
-                MainWindow.actualGlasses++;
+                MainWindow.actualGlasses += 1;
         }
 
   

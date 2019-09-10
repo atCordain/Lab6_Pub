@@ -32,11 +32,12 @@ namespace Lab6_Pub
         public static int actualTables = 0;
         public static int openTime;
 
-        internal const int MAX_ENTRYTIME = 10;
-        internal const int MIN_ENTRYTIME = 3;
+        internal const int MAX_ENTRYTIME = 15;
+        internal const int MIN_ENTRYTIME = 10;
         internal Random random = new Random();
         internal int timeToEntry = 0;
         public static bool open = false;
+        public static bool stop = false; 
         internal static Bouncer bouncer = new Bouncer();
         internal static Bartender bartender = new Bartender();
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
@@ -93,7 +94,9 @@ namespace Lab6_Pub
             open = false;
             StopBouncer();
             StopBartender();
+            StopWaitress(); 
         }
+
 
         private void OpenBar()
         {
@@ -102,6 +105,8 @@ namespace Lab6_Pub
             {
                 StartBouncer();
                 StartBartender();
+                StartWaitress(); 
+                
                 Thread.Sleep(MAX_OPENTIME * 1000);
                 open = false;
             });
@@ -125,6 +130,37 @@ namespace Lab6_Pub
                     }
                 }
             });
+        }
+
+        private void StartWaitress()
+        {
+            Task.Run(() =>
+            {
+                while (open || patrons.Count > 0)
+                {
+                    if (actualGlasses < MAX_GLASSES)
+                    {
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
+                        Waitress.PickUpglasses();
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
+                        Waitress.WashGlases();
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
+                        Waitress.PutOnShelf();
+                        Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
+                    }
+                    else if(stop == true)
+                    {
+                        break; 
+                    }
+                }
+                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, "Waitress gick hem"));
+            });
+        }
+
+
+        private void StopWaitress()
+        {
+            stop = true; 
         }
 
         private void StopBartender()
@@ -167,25 +203,15 @@ namespace Lab6_Pub
 
         private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
         {
-            if (open || patrons.Count > 0)
-            {  
-                    Task.Run(() =>
-                    {
-                        while (actualGlasses < MAX_GLASSES)
-                        {
-                            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is Picking up glasses"));
-                            Waitress.PickUpglasses();
-                            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is Washing glasses"));
-                            Waitress.WashGlases();
-                            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
-                            Waitress.PutOnShelf();
-                        }
-                    });
-            }
-            else
+            if (stop)
             {
-                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "There are enough glasses, Waitress is on a break"));
+                StopWaitress();
             }
+            else if(!stop)
+            {
+                StartWaitress(); 
+            }
+          
         }
     }
 }
