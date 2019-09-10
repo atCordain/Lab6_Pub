@@ -13,10 +13,8 @@ namespace Lab6_Pub
 
         }
 
-
         public void PickUpGlass()
         {
-            
             // Vänta på glas om inget finns
 
             // 3 sec att plocka upp glas

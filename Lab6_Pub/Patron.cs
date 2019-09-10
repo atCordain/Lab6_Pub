@@ -12,6 +12,36 @@ namespace Lab6_Pub
             
         }
 
+        public void EnterBar()
+        {
+
+        }
+
+        public void GetBeer()
+        {
+
+        }
+
+        public void LookForTable()
+        {
+
+        }
+
+        public void Sit()
+        {
+
+        }
+
+        public void Leave()
+        {
+
+        }
+
+        public void DrinkBeer()
+        {
+            
+        }
+
         public string PatronName { get => name; set => name = value; }
 
 
