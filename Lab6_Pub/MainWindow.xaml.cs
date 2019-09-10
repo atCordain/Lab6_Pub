@@ -91,7 +91,6 @@ namespace Lab6_Pub
 
         private void CloseBar()
         {
-            // AVVAKTA THREADS
             open = false;
             StopBouncer();
             StopBartender();
@@ -99,7 +98,6 @@ namespace Lab6_Pub
 
         private void OpenBar()
         {
-            // STARTA THREADS 
             open = true;
             Task.Run(() =>
             {
@@ -115,7 +113,7 @@ namespace Lab6_Pub
 
             Task.Run(() =>
             {
-                while (open) // Ska vara öppet eller gäster kvar.
+                while (open || patrons.Count > 0) // Ska vara öppet eller gäster kvar.
                 {
                     if (actualGlasses > 0)
                     {
