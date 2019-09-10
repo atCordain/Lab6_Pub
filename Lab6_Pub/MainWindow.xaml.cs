@@ -26,27 +26,35 @@ namespace Lab6_Pub
         public const int TIMESCALE = 1;
         public const int MAX_OPENTIME = 10;
         public const int MAX_GLASSES = 8;
-        public const int MAX_CHAIRS = 9;
-        public static int actualGlasses = 0; 
+        public const int MAX_TABLES = 9;
+        public static int actualGlasses = 0;
+        public static int actualTables = 0;
         public static int openTime;
         internal const int MAX_ENTRYTIME = 10;
         internal const int MIN_ENTRYTIME = 3;
         internal Random random = new Random();
         internal int timeToEntry = 0;
         public static bool open = false;
-        public static Bouncer bouncer = new Bouncer();
+        internal static Bouncer bouncer = new Bouncer();
+        internal static Bartender bartender = new Bartender();
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
         public BlockingCollection<Patron> wantsBeer = new BlockingCollection<Patron>();
+
         internal CancellationToken bouncerCancellation = new CancellationTokenSource().Token;
 
         public MainWindow()
         {
             InitializeComponent();
-            int glasses = MAX_GLASSES;
-            int chairs = MAX_CHAIRS;
+            actualGlasses = MAX_GLASSES;
+            actualTables = MAX_TABLES;
+            int chairs = MAX_TABLES;
+
 
             Waitress waitress1 = new Waitress();
 
+            lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)";
+            lblPatrons.Content = $"There are 0 Patrons in the bar";
+            lblTables.Content = $"There are {actualTables} free Tables ({MAX_TABLES} total)"; 
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
@@ -86,6 +94,7 @@ namespace Lab6_Pub
             // AVVAKTA THREADS
             open = false;
             StopBouncer();
+            StopBartender();
         }
 
         private void OpenBar()
@@ -95,11 +104,36 @@ namespace Lab6_Pub
             Task.Run(() =>
             {
                 StartBouncer();
+                StartBartender();
                 Thread.Sleep(MAX_OPENTIME * 1000);
                 open = false;
             });
         }
 
+        private void StartBartender()
+        {
+
+            Task.Run(() =>
+            {
+                while (open) // Ska vara öppet eller gäster kvar.
+                {
+                    if (actualGlasses > 0)
+                    {
+                        bartender.PickUpGlass();
+                        actualGlasses -= 1;
+                        Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
+                        bartender.PourBeer();
+                        Thread.Sleep(3000);
+                        Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Poured a Beer"));
+                    }
+                }
+            });
+        }
+
+        private void StopBartender()
+        {
+            throw new NotImplementedException();
+        }
         private void StartBouncer()
         {
             Task.Run(() =>
@@ -119,6 +153,7 @@ namespace Lab6_Pub
         {
             patrons.Add(patron);
             Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.PatronName));
+            Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
             //Dispatcher.Invoke(() => { lbPatrons.Items.Refresh(); } );
             
         }
