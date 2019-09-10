@@ -1,7 +1,9 @@
 ﻿
 
 using System;
+using System.Threading;
 using System.Timers;
+using System.Windows.Threading;
 
 namespace Lab6_Pub
 {
@@ -11,50 +13,36 @@ namespace Lab6_Pub
         const int TIMETOWASH = 15;
         public static int glassDelay;
         public static int WashDelay;
-        public static Timer timer = new Timer(1000d);
 
         public Waitress()
         {
-            timer.Elapsed += PickUpglasses;
-            timer.Elapsed += WashGlases;
             glassDelay = TIMEPICKGLAS;
             WashDelay = TIMETOWASH;
         }
 
-        public static void PickUpglasses(object sender, ElapsedEventArgs e)
-        { 
-                glassDelay -= 1;
+        internal static void PickUpglasses()
+        {
+                Thread.Sleep(glassDelay * 1000);
         }
 
-        public static void WashGlases(object sender, ElapsedEventArgs e)
+        internal static void WashGlases()
         {
-            WashDelay -= 1;
+            Thread.Sleep(WashDelay * 1000);
+
         }
 
-        public static void PutOnShelf(object sender, ElapsedEventArgs e)
+        internal static void PutOnShelf()
         {
-            while (MainWindow.actualGlasses < MainWindow.MAX_GLASSES && MainWindow.openTime != 0)
-            { 
                 MainWindow.actualGlasses++;
-            }
         }
 
-        public static void StopWaitress()
-        {
-           MainWindow.open = false;
-            timer.Stop(); 
-        }
-
-        internal static void StartWaitress()
-        {
-            MainWindow.open = false;
-            timer.Start();
-        }
+  
 
         public static void GoHome()
         {
             //När alla besökare har gått så går servitrisen hem.
         }
+
 
     }
 }

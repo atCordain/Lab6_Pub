@@ -24,11 +24,10 @@ namespace Lab6_Pub
     public partial class MainWindow : Window
     {
         public const int TIMESCALE = 1;
-        public const int MAX_OPENTIME = 10;
+        public const int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
         public const int MAX_CHAIRS = 9;
         public static int actualGlasses = 0; 
-        public static int openTime;
         internal const int MAX_ENTRYTIME = 10;
         internal const int MIN_ENTRYTIME = 3;
         internal Random random = new Random();
@@ -63,10 +62,7 @@ namespace Lab6_Pub
             throw new NotImplementedException();
         }
 
-        private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
+   
 
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
@@ -133,23 +129,26 @@ namespace Lab6_Pub
             throw new NotImplementedException();
         }
 
-        private void BtnPauseWaitress_Click_1(object sender, RoutedEventArgs e)
+        private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
         {
-            if (open)
-            {
-                Waitress.StopWaitress(); 
+            if (open || patrons.Count > 0)
+            {  
+                    Task.Run(() =>
+                    {
+                        while (actualGlasses < MAX_GLASSES)
+                        {
+                            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is Picking up glasses"));
+                            Waitress.PickUpglasses();
+                            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is Washing glasses"));
+                            Waitress.WashGlases();
+                            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
+                            Waitress.PutOnShelf();
+                        }
+                    });
             }
             else
             {
-                Waitress.StartWaitress();
-
-                //Thread pickUpGlasses = new Thread(Waitress.PickUpglasses);
-                //Thread washGlasses = new Thread(Waitress.WashGlases);
-                //Thread putOnShelf = new Thread(Waitress.PutOnShelf);
-
-                //pickUpGlasses.Start();
-                //washGlasses.Start();
-                //putOnShelf.Start();
+                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "There are enough glasses, Waitress is on a break"));
             }
         }
     }
