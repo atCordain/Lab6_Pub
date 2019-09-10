@@ -9,6 +9,7 @@ namespace Lab6_Pub
 
         public Patron()
         {
+            
         }
 
         public string PatronName { get => name; set => name = value; }
