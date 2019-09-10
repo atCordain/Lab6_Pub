@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Lab6_Pub
 {
@@ -22,14 +24,19 @@ namespace Lab6_Pub
     public partial class MainWindow : Window
     {
         public const int TIMESCALE = 1;
-        public const int MAX_OPENTIME = 120;
+        public const int MAX_OPENTIME = 10;
         public const int MAX_GLASSES = 8;
         public const int MAX_CHAIRS = 9;
+        internal const int MAX_ENTRYTIME = 10;
+        internal const int MIN_ENTRYTIME = 3;
+        internal Random random = new Random();
+        internal int timeToEntry = 0;
         public int openTime;
         public static bool open = false;
-        public Timer timer;
         public static Bouncer bouncer = new Bouncer();
-        public List<Patron> patrons = new List<Patron>();
+        public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
+        public BlockingCollection<Patron> wantsBeer = new BlockingCollection<Patron>();
+        internal CancellationToken bouncerCancellation = new CancellationTokenSource().Token;
 
         public MainWindow()
         {
@@ -38,35 +45,13 @@ namespace Lab6_Pub
             int chairs = MAX_CHAIRS;
             openTime = MAX_OPENTIME;
 
-            timer = new Timer(1000d);
-            timer.Elapsed += Timer_Elapsed;
-
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
-            lbPatrons.ItemsSource = patrons;
-            lbPatrons.DisplayMemberPath = "PatronName";
+            //lbPatrons.ItemsSource = patrons;
+            //lbPatrons.DisplayMemberPath = "PatronName";
 
-        }
-
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            this.Dispatcher.Invoke(() =>
-            {
-                Patron patron = bouncer.CreatePatron();
-                if (patron != null)
-                {
-                    patrons.Add(patron);
-                    lbPatrons.Items.Refresh();
-                }
-                
-                
-
-                lblOpen.Content = "Closes in: " + openTime;
-                openTime -= 1;
-            });
-            
         }
 
         private void BtnPausePatrons_Click(object sender, RoutedEventArgs e)
@@ -96,14 +81,47 @@ namespace Lab6_Pub
         {
             // AVVAKTA THREADS
             open = false;
-            timer.Stop();
+            StopBouncer();
         }
 
         private void OpenBar()
         {
             // STARTA THREADS 
             open = true;
-            timer.Start();
+            Task.Run(() =>
+            {
+                StartBouncer();
+                Thread.Sleep(MAX_OPENTIME * 1000);
+                open = false;
+            });
+        }
+
+        private void StartBouncer()
+        {
+            Task.Run(() =>
+            {
+                while (open)
+                {
+                    timeToEntry = random.Next(MAX_ENTRYTIME - MIN_ENTRYTIME) + MIN_ENTRYTIME *1000;
+                    StartPatron(bouncer.CreatePatron());                   
+                    Thread.Sleep(timeToEntry);
+                    
+                }
+                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, "Bouncer gick hem"));
+            });
+        }
+
+        private void StartPatron(Patron patron)
+        {
+            patrons.Add(patron);
+            Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.PatronName));
+            //Dispatcher.Invoke(() => { lbPatrons.Items.Refresh(); } );
+            
+        }
+
+        private void StopBouncer()
+        {
+            //bouncerCancellation.Cancel();
         }
 
         private void BtnPauseBartender_Click(object sender, RoutedEventArgs e)
