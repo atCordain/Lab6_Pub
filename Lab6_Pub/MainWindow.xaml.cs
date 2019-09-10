@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Threading;
 
 namespace Lab6_Pub
 {
@@ -25,7 +26,8 @@ namespace Lab6_Pub
         public const int MAX_OPENTIME = 120;
         public const int MAX_GLASSES = 8;
         public const int MAX_CHAIRS = 9;
-        public int openTime;
+        public static int actualGlasses = 0; 
+        public static int openTime;
         public static bool open = false;
         public Timer timer;
         public static Bouncer bouncer = new Bouncer();
@@ -41,12 +43,15 @@ namespace Lab6_Pub
             timer = new Timer(1000d);
             timer.Elapsed += Timer_Elapsed;
 
+            Waitress waitress1 = new Waitress();
+
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             lbPatrons.ItemsSource = patrons;
             lbPatrons.DisplayMemberPath = "PatronName";
+
 
         }
 
@@ -60,8 +65,7 @@ namespace Lab6_Pub
                     patrons.Add(patron);
                     lbPatrons.Items.Refresh();
                 }
-                
-                
+
 
                 lblOpen.Content = "Closes in: " + openTime;
                 openTime -= 1;
@@ -109,6 +113,26 @@ namespace Lab6_Pub
         private void BtnPauseBartender_Click(object sender, RoutedEventArgs e)
         {
             throw new NotImplementedException();
+        }
+
+        private void BtnPauseWaitress_Click_1(object sender, RoutedEventArgs e)
+        {
+            if (open)
+            {
+                Waitress.StopWaitress(); 
+            }
+            else
+            {
+                Waitress.StartWaitress();
+
+                Thread pickUpGlasses = new Thread(Waitress.PickUpglasses);
+                Thread washGlasses = new Thread(Waitress.WashGlases);
+                Thread putOnShelf = new Thread(Waitress.PutOnShelf);
+
+                pickUpGlasses.Start();
+                washGlasses.Start();
+                putOnShelf.Start();
+            }
         }
     }
 }
