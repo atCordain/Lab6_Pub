@@ -14,7 +14,7 @@
         <Label Content="Waitress" HorizontalAlignment="Left" Margin="300,50,0,0" VerticalAlignment="Top"/>
         <Label Content="Patrons" HorizontalAlignment="Left" Margin="550,50,0,0" VerticalAlignment="Top"/>
         <Button x:Name="btnPauseBartender" Content="Pause/Continue" HorizontalAlignment="Left" Margin="50,360,0,0" VerticalAlignment="Top" Width="200"/>
-        <Button x:Name="btnPauseWaitress" Content="Pause/Continue" HorizontalAlignment="Left" Margin="300,360,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnPauseWaitress" Content="Pause/Continue" HorizontalAlignment="Left" Margin="300,360,0,0" VerticalAlignment="Top" Width="200" Click="BtnPauseWaitress_Click_1"/>
         <Button x:Name="btnPausePatrons" Content="Pause/Continue" HorizontalAlignment="Left" Margin="550,360,0,0" VerticalAlignment="Top" Width="200"/>
         <Button x:Name="btnStopAll" Content="Panic (Stop all threads)" HorizontalAlignment="Left" Margin="760,360,0,0" VerticalAlignment="Top" Width="200"/>
         <Button x:Name="btnOpenClose" Content="Open/Close bar" HorizontalAlignment="Left" Margin="50,390,0,0" VerticalAlignment="Top" Width="700"/>
