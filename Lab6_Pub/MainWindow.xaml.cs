@@ -24,17 +24,20 @@ namespace Lab6_Pub
     public partial class MainWindow : Window
     {
         public const int TIMESCALE = 1;
-        public const int MAX_OPENTIME = 10;
+        public const int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
+
         public const int MAX_TABLES = 9;
         public static int actualGlasses = 0;
         public static int actualTables = 0;
         public static int openTime;
-        internal const int MAX_ENTRYTIME = 10;
-        internal const int MIN_ENTRYTIME = 3;
+
+        internal const int MAX_ENTRYTIME = 15;
+        internal const int MIN_ENTRYTIME = 10;
         internal Random random = new Random();
         internal int timeToEntry = 0;
         public static bool open = false;
+        public static bool stop = false; 
         internal static Bouncer bouncer = new Bouncer();
         internal static Bartender bartender = new Bartender();
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
@@ -81,10 +84,7 @@ namespace Lab6_Pub
             }
         }
 
-        private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
+   
 
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
@@ -104,15 +104,20 @@ namespace Lab6_Pub
             open = false;
             StopBouncer();
             StopBartender();
+            StopWaitress(); 
         }
+
 
         private void OpenBar()
         {
             open = true;
             Task.Run(() =>
             {
+
                 StartBouncer(bouncerCTS.Token);
                 StartBartender(bartenderCTS.Token);
+                StartWaitress(); 
+
                 Thread.Sleep(MAX_OPENTIME * 1000);
                 open = false;
             });
@@ -136,6 +141,37 @@ namespace Lab6_Pub
                 }
                 lbBartender.Items.Insert(0, "Bartendern gick hem");
             });
+        }
+
+        private void StartWaitress()
+        {
+            Task.Run(() =>
+            {
+                while (open || patrons.Count > 0)
+                {
+                    if (actualGlasses < MAX_GLASSES)
+                    {
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
+                        Waitress.PickUpglasses();
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
+                        Waitress.WashGlases();
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
+                        Waitress.PutOnShelf();
+                        Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
+                    }
+                    else if(stop == true)
+                    {
+                        break; 
+                    }
+                }
+                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, "Waitress gick hem"));
+            });
+        }
+
+
+        private void StopWaitress()
+        {
+            stop = true; 
         }
 
         private void StopBartender()
@@ -182,24 +218,17 @@ namespace Lab6_Pub
             }
         }
 
-        private void BtnPauseWaitress_Click_1(object sender, RoutedEventArgs e)
+        private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
         {
-            if (open)
+            if (stop)
             {
-                Waitress.StopWaitress(); 
+                StopWaitress();
             }
-            else
+            else if(!stop)
             {
-                Waitress.StartWaitress();
-
-                //Thread pickUpGlasses = new Thread(Waitress.PickUpglasses);
-                //Thread washGlasses = new Thread(Waitress.WashGlases);
-                //Thread putOnShelf = new Thread(Waitress.PutOnShelf);
-
-                //pickUpGlasses.Start();
-                //washGlasses.Start();
-                //putOnShelf.Start();
+                StartWaitress(); 
             }
+          
         }
     }
 }
