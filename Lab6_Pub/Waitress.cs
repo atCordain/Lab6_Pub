@@ -7,7 +7,7 @@ using System.Windows.Threading;
 
 namespace Lab6_Pub
 {
-    internal class Waitress
+    public class Waitress
     {
         const int TIMEPICKGLAS = 3; 
         const int TIMETOWASH = 3;
@@ -20,18 +20,19 @@ namespace Lab6_Pub
             WashDelay = TIMETOWASH;
         }
 
-        internal static void PickUpglasses()
+        public void PickUpglasses()
         {
+            
                 Thread.Sleep(glassDelay * 1000);
         }
 
-        internal static void WashGlases()
+        public void WashGlases()
         {
             Thread.Sleep(WashDelay * 1000);
 
         }
 
-        internal static void PutOnShelf()
+        public void PutOnShelf()
         {
                 MainWindow.actualGlasses += 1;
         }
