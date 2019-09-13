@@ -44,7 +44,7 @@ namespace Lab6_Pub
         public BlockingCollection<Patron> wantsBeer = new BlockingCollection<Patron>();
 
 
-        public CancellationTokenSource tokenSource = new CancellationTokenSource();
+        public CancellationTokenSource waitressCTS = new CancellationTokenSource();
         private CancellationTokenSource bouncerCTS = new CancellationTokenSource();
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
 
@@ -118,7 +118,7 @@ namespace Lab6_Pub
             Task.Run(() =>
             {
 
-                StartWaitress(tokenSource.Token); 
+                StartWaitress(waitressCTS.Token); 
                 StartBouncer(bouncerCTS.Token);
                 StartBartender(bartenderCTS.Token);
 
@@ -170,7 +170,7 @@ namespace Lab6_Pub
 
         private void StopWaitress()
         {
-            tokenSource.Cancel();
+            waitressCTS.Cancel();
         }
 
         private void StopBartender()
@@ -220,14 +220,14 @@ namespace Lab6_Pub
         private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
         {
 
-            if (tokenSource.IsCancellationRequested)
+            if (waitressCTS.IsCancellationRequested)
             {
-                tokenSource = new CancellationTokenSource();
-                StartWaitress(tokenSource.Token);
+                waitressCTS = new CancellationTokenSource();
+                StartWaitress(waitressCTS.Token);
             }
             else
             {
-                tokenSource.Cancel();
+                waitressCTS.Cancel();
                 StopWaitress();
             }
         }
