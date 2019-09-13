@@ -37,13 +37,18 @@ namespace Lab6_Pub
         internal Random random = new Random();
         internal int timeToEntry = 0;
         public static bool open = false;
-        public static bool stop = false; 
         internal static Bouncer bouncer = new Bouncer();
         internal static Bartender bartender = new Bartender();
+        public static Waitress waitress = new Waitress();
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
         public BlockingCollection<Patron> wantsBeer = new BlockingCollection<Patron>();
 
+        public CancellationTokenSource tokenSource = new CancellationTokenSource();
+
         internal CancellationToken bouncerCancellation = new CancellationTokenSource().Token;
+
+
+
 
         public MainWindow()
         {
@@ -53,17 +58,19 @@ namespace Lab6_Pub
             int chairs = MAX_TABLES;
 
 
-            Waitress waitress1 = new Waitress();
-
             lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)";
             lblPatrons.Content = $"There are 0 Patrons in the bar";
-            lblTables.Content = $"There are {actualTables} free Tables ({MAX_TABLES} total)"; 
+            lblTables.Content = $"There are {actualTables} free Tables ({MAX_TABLES} total)";
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             //lbPatrons.ItemsSource = patrons;
             //lbPatrons.DisplayMemberPath = "PatronName";
+
+            
+
+            
 
 
         }
@@ -94,7 +101,7 @@ namespace Lab6_Pub
             open = false;
             StopBouncer();
             StopBartender();
-            StopWaitress(); 
+            StopWaitress();
         }
 
 
@@ -105,7 +112,7 @@ namespace Lab6_Pub
             {
                 StartBouncer();
                 StartBartender();
-                StartWaitress(); 
+                StartWaitress(tokenSource.Token); 
                 
                 Thread.Sleep(MAX_OPENTIME * 1000);
                 open = false;
@@ -114,7 +121,6 @@ namespace Lab6_Pub
 
         private void StartBartender()
         {
-
             Task.Run(() =>
             {
                 while (open || patrons.Count > 0) // Ska vara öppet eller gäster kvar.
@@ -132,35 +138,30 @@ namespace Lab6_Pub
             });
         }
 
-        private void StartWaitress()
+        public void StartWaitress(CancellationToken token)
         {
-            Task.Run(() =>
-            {
-                while (open || patrons.Count > 0)
+
+            var task = Task.Run(() =>
                 {
-                    if (actualGlasses < MAX_GLASSES)
+                    while ((open || patrons.Count > 0) && !token.IsCancellationRequested)
                     {
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
-                        Waitress.PickUpglasses();
+                        waitress.PickUpglasses();
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
-                        Waitress.WashGlases();
+                        waitress.WashGlases();
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
-                        Waitress.PutOnShelf();
+                        waitress.PutOnShelf();
                         Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
                     }
-                    else if(stop == true)
-                    {
-                        break; 
-                    }
-                }
-                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, "Waitress gick hem"));
-            });
+
+                    Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress tog en paus"));
+                });
         }
 
 
         private void StopWaitress()
         {
-            stop = true; 
+            tokenSource.Cancel();
         }
 
         private void StopBartender()
@@ -203,15 +204,17 @@ namespace Lab6_Pub
 
         private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
         {
-            if (stop)
+
+            if (tokenSource.IsCancellationRequested)
             {
+                tokenSource = new CancellationTokenSource();
+                StartWaitress(tokenSource.Token);
+            }
+            else
+            {
+                tokenSource.Cancel();
                 StopWaitress();
             }
-            else if(!stop)
-            {
-                StartWaitress(); 
-            }
-          
         }
     }
 }
