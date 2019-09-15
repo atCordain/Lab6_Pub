@@ -65,6 +65,7 @@ namespace Lab6_Pub
             int chairs = MAX_TABLES;
 
             //TODO - Set timer to work 
+            //TODO - Increase speed Button 
 
             //DispatcherTimer timer = new DispatcherTimer();
             //timer.Interval = TimeSpan.FromMilliseconds(1);
@@ -82,15 +83,15 @@ namespace Lab6_Pub
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
-            btnIncreaseSpeed.Click += btnIncreaseSpeed_Click;
 
             //lbPatrons.ItemsSource = patrons;
             //lbPatrons.DisplayMemberPath = "PatronName";
 
             // varje gäst ska ha en task - tommy
             //Bartenden ska taa emot request från patron - Tommy
-            // adda panik knapp och stoppa allt - Petter
-            // clear listboxar på tasks efter while loop - Petter  
+         
+
+            
 
 
         }
@@ -104,10 +105,6 @@ namespace Lab6_Pub
 
 
 
-        private void btnIncreaseSpeed_Click(object sender, RoutedEventArgs e)
-        {
-            timeScale = timeScale - 0.2; 
-        }
 
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
         {
