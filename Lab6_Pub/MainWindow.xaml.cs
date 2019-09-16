@@ -66,8 +66,6 @@ namespace Lab6_Pub
             actualTables = MAX_TABLES;
             int chairs = MAX_TABLES;
 
-            //TODO - Increase speed Button 
-
             lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)";
             lblPatrons.Content = $"There are 0 Patrons in the bar";
             lblTables.Content = $"There are {actualTables} free Tables ({MAX_TABLES} total)";
@@ -79,24 +77,18 @@ namespace Lab6_Pub
             timer.Tick += timer_Tick;
             btnIncreaseSpeed.Click += IncreaseSpeed_Click; 
 
-
-            //lbPatrons.ItemsSource = patrons;
-            //lbPatrons.DisplayMemberPath = "PatronName";
-
-            // varje gäst ska ha en task - tommy
-            //Bartenden ska taa emot request från patron - Tommy
         }
 
         private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
         {
 
             MAX_ENTRYTIME = MAX_ENTRYTIME - (SPEED_INCREASE*3);
-            MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3); 
-            Waitress.glassDelay = Waitress.glassDelay - (SPEED_INCREASE);
-            Waitress.washDelay = Waitress.washDelay - (SPEED_INCREASE);
-            BartenderPourBeerTime = BartenderPourBeerTime - (SPEED_INCREASE);
+            MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3);
+            waitress.GlasDelay = waitress.GlasDelay - SPEED_INCREASE;
+            waitress.WashDelay = waitress.WashDelay - SPEED_INCREASE;
+            BartenderPourBeerTime = BartenderPourBeerTime - SPEED_INCREASE;
 
-            if (MAX_ENTRYTIME == 1 || Waitress.glassDelay == 1 || Waitress.washDelay == 1 || BartenderPourBeerTime == 1)
+            if (MAX_ENTRYTIME == 1 || waitress.GlasDelay == 1 || waitress.WashDelay == 1 || BartenderPourBeerTime == 1)
             {
                 btnIncreaseSpeed.IsEnabled = false; 
             }
@@ -136,8 +128,7 @@ namespace Lab6_Pub
             else
             {
                 OpenBar(); 
-            }
-             
+            }   
         }
 
         private void CloseBar()
@@ -148,7 +139,6 @@ namespace Lab6_Pub
             StopBartender();
             StopWaitress();
         }
-
 
         private void OpenBar()
         {
@@ -178,7 +168,7 @@ namespace Lab6_Pub
                         actualGlasses -= 1;
                         Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
                         bartender.PourBeer();
-                        Thread.Sleep(BartenderPourBeerTime *1000);
+                        Thread.Sleep(BartenderPourBeerTime * 1000);
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Poured a Beer"));
                     }
                 }

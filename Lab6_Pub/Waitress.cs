@@ -9,10 +9,12 @@ namespace Lab6_Pub
 {
     public class Waitress
     {
-        public static int TIMEPICKGLAS = 3;
-        public static int TIMETOWASH = 3;
-        public static int glassDelay { get; set; }
-        public static int washDelay  {get; set;}
+        private int TIMEPICKGLAS = 3;
+        private int TIMETOWASH = 3;
+        private static int glassDelay;
+        private static int washDelay;
+
+   
 
         public Waitress()
         {
@@ -44,6 +46,8 @@ namespace Lab6_Pub
             //När alla besökare har gått så går servitrisen hem.
         }
 
+        public int GlasDelay { get { return glassDelay; } internal set { glassDelay = value; } }
+        public int WashDelay { get { return washDelay; } internal set { washDelay = value; } }
 
     }
 
