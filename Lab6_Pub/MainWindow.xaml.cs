@@ -24,17 +24,19 @@ namespace Lab6_Pub
     /// </summary>
     public partial class MainWindow : Window
     {
-        public double timeScale = 1;
         public int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
+        public const int SPEED_INCREASE = 1;
+
 
         public const int MAX_TABLES = 9;
         public static int actualGlasses = 0;
         public static int actualTables = 0;
         public static int openTime;
 
-        internal const int MAX_ENTRYTIME = 15;
-        internal const int MIN_ENTRYTIME = 10;
+        internal int MAX_ENTRYTIME = 15;
+        internal int MIN_ENTRYTIME = 10;
+        internal int BartenderPourBeerTime = 3; 
 
         System.Threading.Timer TheTimer = null;
 
@@ -74,8 +76,8 @@ namespace Lab6_Pub
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
-
             timer.Tick += timer_Tick;
+            btnIncreaseSpeed.Click += IncreaseSpeed_Click; 
 
 
             //lbPatrons.ItemsSource = patrons;
@@ -83,16 +85,22 @@ namespace Lab6_Pub
 
             // varje gäst ska ha en task - tommy
             //Bartenden ska taa emot request från patron - Tommy
-
-
-
-
-
         }
 
+        private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
+        {
 
+            MAX_ENTRYTIME = MAX_ENTRYTIME - (SPEED_INCREASE*3);
+            MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3); 
+            Waitress.glassDelay = Waitress.glassDelay - (SPEED_INCREASE);
+            Waitress.washDelay = Waitress.washDelay - (SPEED_INCREASE);
+            BartenderPourBeerTime = BartenderPourBeerTime - (SPEED_INCREASE);
 
-
+            if (MAX_ENTRYTIME == 1 || Waitress.glassDelay == 1 || Waitress.washDelay == 1 || BartenderPourBeerTime == 1)
+            {
+                btnIncreaseSpeed.IsEnabled = false; 
+            }
+        }
 
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
         {
@@ -170,7 +178,7 @@ namespace Lab6_Pub
                         actualGlasses -= 1;
                         Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
                         bartender.PourBeer();
-                        Thread.Sleep(3000);
+                        Thread.Sleep(BartenderPourBeerTime *1000);
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Poured a Beer"));
                     }
                 }
