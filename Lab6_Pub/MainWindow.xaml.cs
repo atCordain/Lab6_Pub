@@ -53,7 +53,7 @@ namespace Lab6_Pub
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
 
 
-       public DispatcherTimer timer = new DispatcherTimer();
+        public DispatcherTimer timer = new DispatcherTimer();
 
 
 
@@ -64,16 +64,7 @@ namespace Lab6_Pub
             actualTables = MAX_TABLES;
             int chairs = MAX_TABLES;
 
-            //TODO - Set timer to work 
             //TODO - Increase speed Button 
-
-            //DispatcherTimer timer = new DispatcherTimer();
-            //timer.Interval = TimeSpan.FromMilliseconds(1);
-            //lblOpen.Content = MAX_OPENTIME;
-
-            //timer.Start();
-
-
 
             lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)";
             lblPatrons.Content = $"There are 0 Patrons in the bar";
@@ -84,24 +75,21 @@ namespace Lab6_Pub
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
 
+            timer.Tick += timer_Tick;
+
+
             //lbPatrons.ItemsSource = patrons;
             //lbPatrons.DisplayMemberPath = "PatronName";
 
             // varje gäst ska ha en task - tommy
             //Bartenden ska taa emot request från patron - Tommy
-         
-
-            
 
 
-        }
-
-        private void CountdownEvent()
-        {
 
 
 
         }
+
 
 
 
@@ -123,7 +111,12 @@ namespace Lab6_Pub
             }
         }
 
-   
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            timer.Interval = new TimeSpan(0, 0, 1);
+            lblOpen.Content = string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
+            MAX_OPENTIME--;
+        }
 
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
@@ -134,7 +127,7 @@ namespace Lab6_Pub
             }
             else
             {
-                OpenBar();
+                OpenBar(); 
             }
              
         }
@@ -142,6 +135,7 @@ namespace Lab6_Pub
         private void CloseBar()
         {
             open = false;
+            timer.Stop();
             StopBouncer();
             StopBartender();
             StopWaitress();
@@ -150,8 +144,8 @@ namespace Lab6_Pub
 
         private void OpenBar()
         {
-
             open = true;
+            timer.Start();
             Task.Run(() =>
             {
 
