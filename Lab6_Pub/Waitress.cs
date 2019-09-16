@@ -35,6 +35,7 @@ namespace Lab6_Pub
         public void PutOnShelf()
         {
                 MainWindow.actualGlasses += 1;
+
         }
 
   
