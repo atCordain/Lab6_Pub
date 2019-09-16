@@ -15,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Windows.Threading;
 
 namespace Lab6_Pub
 {
@@ -23,8 +24,8 @@ namespace Lab6_Pub
     /// </summary>
     public partial class MainWindow : Window
     {
-        public const int TIMESCALE = 1;
-        public const int MAX_OPENTIME = 100;
+        public double timeScale = 1;
+        public int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
 
         public const int MAX_TABLES = 9;
@@ -34,6 +35,9 @@ namespace Lab6_Pub
 
         internal const int MAX_ENTRYTIME = 15;
         internal const int MIN_ENTRYTIME = 10;
+
+        System.Threading.Timer TheTimer = null;
+
         internal Random random = new Random();
         internal int timeToEntry = 0;
         public static bool open = false;
@@ -49,6 +53,8 @@ namespace Lab6_Pub
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
 
 
+       public DispatcherTimer timer = new DispatcherTimer();
+
 
 
         public MainWindow()
@@ -58,6 +64,17 @@ namespace Lab6_Pub
             actualTables = MAX_TABLES;
             int chairs = MAX_TABLES;
 
+            //TODO - Set timer to work 
+            //TODO - Increase speed Button 
+
+            //DispatcherTimer timer = new DispatcherTimer();
+            //timer.Interval = TimeSpan.FromMilliseconds(1);
+            //lblOpen.Content = MAX_OPENTIME;
+
+            //timer.Start();
+
+
+
             lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)";
             lblPatrons.Content = $"There are 0 Patrons in the bar";
             lblTables.Content = $"There are {actualTables} free Tables ({MAX_TABLES} total)";
@@ -65,16 +82,34 @@ namespace Lab6_Pub
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
+            btnStopAll.Click += BtnStopAll_Click;
+
             //lbPatrons.ItemsSource = patrons;
             //lbPatrons.DisplayMemberPath = "PatronName";
 
-            
+            // varje gäst ska ha en task - tommy
+            //Bartenden ska taa emot request från patron - Tommy
+         
 
             
 
 
         }
 
+        private void CountdownEvent()
+        {
+
+
+
+        }
+
+
+
+
+        private void BtnStopAll_Click(object sender, RoutedEventArgs e)
+        {
+            CloseBar(); 
+        }
 
         private void BtnPausePatrons_Click(object sender, RoutedEventArgs e)
         {
@@ -92,6 +127,7 @@ namespace Lab6_Pub
 
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
+
             if (open)
             {
                 CloseBar();
@@ -114,6 +150,7 @@ namespace Lab6_Pub
 
         private void OpenBar()
         {
+
             open = true;
             Task.Run(() =>
             {
@@ -154,6 +191,7 @@ namespace Lab6_Pub
                 {
                     while ((open || patrons.Count > 0) && !token.IsCancellationRequested)
                     {
+                       
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
                         waitress.PickUpglasses();
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
@@ -161,8 +199,13 @@ namespace Lab6_Pub
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
                         waitress.PutOnShelf();
                         Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
+                            if (actualGlasses == MAX_GLASSES)
+                            {
+                                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress found 0 glasses"));
+                            }
+                        Thread.Sleep(1000);
+                        Dispatcher.Invoke(() => lbWaitress.Items.Clear());
                     }
-
                     Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress tog en paus"));
                 });
         }
