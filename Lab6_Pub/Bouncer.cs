@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Lab6_Pub
 {
     public class Bouncer
     {
         // TODO eventuellt Singleton.
-        internal Random random = new Random();
-        internal Patron patron;
+        private Random random = new Random();
+        private Patron patron;
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public Bouncer()
         {
@@ -20,9 +23,13 @@ namespace Lab6_Pub
 
         public Patron CreatePatron()
         {
-            patron = new Patron();
-            patron.PatronName = CheckID();
+            patron = new Patron(CheckID());
             return patron;
+        }
+
+        public void CancelPatrons()
+        {
+            cancellationTokenSource.Cancel();
         }
     }
 }
