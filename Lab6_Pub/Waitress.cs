@@ -23,7 +23,7 @@ namespace Lab6_Pub
 
         public void PickUpglasses(int dirtyGlasses)
         {
-            Thread.Sleep(TIME_TO_PICKUP_GLASS * 1000);
+            Thread.Sleep(TIMEPICKGLAS * 1000);
             this.dirtyGlasses = dirtyGlasses;
         }
 
