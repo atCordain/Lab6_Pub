@@ -14,6 +14,7 @@ namespace Lab6_Pub
     {
         private const int POUR_BEER_TIME = 3;
         private const int REST_TIME = 1;
+        private double speed = 1;
 
         public Bartender()
         {
@@ -22,21 +23,19 @@ namespace Lab6_Pub
 
         public string PourBeer(Patron patron)
         {
-            Thread.Sleep(POUR_BEER_TIME * 1000);
+            Thread.Sleep((int)(POUR_BEER_TIME * speed * 1000));
+            patron.BeerDelivery();
             return $"Poured a beer for {patron.Name}";
         }
 
-        public bool TakeGlass()
+        public void TakeGlass()
         {
-            if (MainWindow.availableGlasses > 0)
-            {
-                MainWindow.availableGlasses -= 1;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            MainWindow.availableGlasses -= 1;
+        }
+
+        public void SetSpeed(double speed)
+        {
+            this.speed = speed;
         }
     }
 }

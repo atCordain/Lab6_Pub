@@ -20,7 +20,7 @@ namespace Lab6_Pub
         private const int DEFAULT_CHECK_TIME = 1;
         private BlockingCollection<Patron> beerQueue;
         private CancellationToken cancellationToken;
-
+        private double speed = 1;
 
         public Patron(string name)
         {
@@ -29,14 +29,15 @@ namespace Lab6_Pub
 
         public void EnterBar()
         {
-            Thread.Sleep(ENTER_WAIT_TIME * 1000);
+            Thread.Sleep((int)(ENTER_WAIT_TIME * speed * 1000));
         }
 
-        public void GetBeer()
+        public void WaitForBeer()
         {
+            MainWindow.JoinBeerQueue(this);
             while (!hasBeer)
             {
-                Thread.Sleep(DEFAULT_CHECK_TIME * 1000);
+                Thread.Sleep((int)(BEER_CHECK_TIME * speed * 1000));
             }
         }
 
@@ -49,9 +50,9 @@ namespace Lab6_Pub
                     hasTable = true;
                     MainWindow.availableTables -= 1;
                 }
-                Thread.Sleep(DEFAULT_CHECK_TIME * 1000);
+                Thread.Sleep((int)(DEFAULT_CHECK_TIME * speed * 1000));
             }
-            Thread.Sleep(WALK_TO_TABLE_TIME * 1000);
+            Thread.Sleep((int)(WALK_TO_TABLE_TIME * speed *  1000));
         }
 
         public string Sit()
@@ -62,13 +63,17 @@ namespace Lab6_Pub
         public void DrinkBeer()
         {
             // slumpa 10-20 sec.
-            Thread.Sleep((random.Next(MAX_DRINKTIME - MIN_DRINKTIME) + MIN_DRINKTIME) * 1000);
+            Thread.Sleep((int)((random.Next(MAX_DRINKTIME - MIN_DRINKTIME) + MIN_DRINKTIME) * speed * 1000));
         }
         public string Leave()
         {
             MainWindow.dirtyGlasses += 1;
             MainWindow.availableTables += 1;
             return $"{Name} left the bar.";
+        }
+        public void SetSpeed(double speed)
+        {
+            this.speed = speed;
         }
 
         public string Name { get => name; set => name = value; }
