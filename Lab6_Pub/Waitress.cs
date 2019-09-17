@@ -14,8 +14,6 @@ namespace Lab6_Pub
         private static int glassDelay;
         private static int washDelay;
 
-   
-
         public Waitress()
         {
             glassDelay = TIMEPICKGLAS;
@@ -39,11 +37,10 @@ namespace Lab6_Pub
                 MainWindow.actualGlasses += 1;
         }
 
-  
-
         public static void GoHome()
         {
             //När alla besökare har gått så går servitrisen hem.
+
         }
 
         public int GlasDelay { get { return glassDelay; } internal set { glassDelay = value; } }

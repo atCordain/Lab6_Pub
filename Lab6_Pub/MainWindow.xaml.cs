@@ -27,8 +27,6 @@ namespace Lab6_Pub
         public int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
         public const int SPEED_INCREASE = 1;
-
-
         public const int MAX_TABLES = 9;
         public static int actualGlasses = 0;
         public static int actualTables = 0;
@@ -37,8 +35,6 @@ namespace Lab6_Pub
         internal int MAX_ENTRYTIME = 15;
         internal int MIN_ENTRYTIME = 10;
         internal int BartenderPourBeerTime = 3; 
-
-        System.Threading.Timer TheTimer = null;
 
         internal Random random = new Random();
         internal int timeToEntry = 0;
@@ -49,15 +45,11 @@ namespace Lab6_Pub
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
         public BlockingCollection<Patron> wantsBeer = new BlockingCollection<Patron>();
 
-
         public CancellationTokenSource tokenSource = new CancellationTokenSource();
         private CancellationTokenSource bouncerCTS = new CancellationTokenSource();
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
 
-
         public DispatcherTimer timer = new DispatcherTimer();
-
-
 
         public MainWindow()
         {
@@ -150,7 +142,6 @@ namespace Lab6_Pub
                 StartWaitress(tokenSource.Token); 
                 StartBouncer(bouncerCTS.Token);
                 StartBartender(bartenderCTS.Token);
-
                 Thread.Sleep(MAX_OPENTIME * 1000);
                 open = false;
             });
@@ -172,7 +163,7 @@ namespace Lab6_Pub
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Poured a Beer"));
                     }
                 }
-                lbBartender.Items.Insert(0, "Bartendern gick hem");
+                teamlbBartender.Items.Insert(0, "Bartendern gick hem");
             });
         }
 
@@ -198,7 +189,13 @@ namespace Lab6_Pub
                         Thread.Sleep(1000);
                         Dispatcher.Invoke(() => lbWaitress.Items.Clear());
                     }
-                    Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress tog en paus"));
+                    if(open && patrons.Count > 0 && token.IsCancellationRequested)
+                    {
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress tog en paus"));
+                    } else 
+                    {
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress gick hem"));
+                    }
                 });
         }
 
