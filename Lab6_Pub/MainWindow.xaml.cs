@@ -24,11 +24,15 @@ namespace Lab6_Pub
     /// </summary>
     public partial class MainWindow : Window
     {
-        public double timeScale = 1;
         public int MAX_OPENTIME = 100;
-
+        public const int SPEED_INCREASE = 1;
+        
         public const int MAX_GLASSES = 8;
         public const int MAX_TABLES = 9;
+
+
+        internal int MAX_ENTRYTIME = 15;
+        internal int MIN_ENTRYTIME = 10;
 
         public static int availableGlasses = 0;
         public static int availableTables = 0;
@@ -36,10 +40,8 @@ namespace Lab6_Pub
 
         public int openTime;
 
-        private const int MAX_ENTRYTIME = 15;
-        private const int MIN_ENTRYTIME = 10;
-
         private const int DEFAULT_WAIT_TIME = 1;
+
 
         internal Random random = new Random();
         internal int timeToEntry = 0;
@@ -47,12 +49,14 @@ namespace Lab6_Pub
         private Bouncer bouncer = new Bouncer();
         private Waitress waitress = new Waitress();
         private Bartender bartender = new Bartender();
+        
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
         public BlockingCollection<Patron> beerQueue = new BlockingCollection<Patron>();
 
         public CancellationTokenSource waitressCTS = new CancellationTokenSource();
         private CancellationTokenSource bouncerCTS = new CancellationTokenSource();
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
+
 
 
         public DispatcherTimer timer = new DispatcherTimer();
@@ -73,6 +77,25 @@ namespace Lab6_Pub
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
+            btnIncreaseSpeed.Click += IncreaseSpeed_Click; 
+            timer.Tick += timer_Tick;
+            
+
+        }
+
+        private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
+        {
+
+            MAX_ENTRYTIME = MAX_ENTRYTIME - (SPEED_INCREASE*3);
+            MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3);
+            waitress.GlasDelay = waitress.GlasDelay - SPEED_INCREASE;
+            waitress.WashDelay = waitress.WashDelay - SPEED_INCREASE;
+            BartenderPourBeerTime = BartenderPourBeerTime - SPEED_INCREASE;
+
+            if (MAX_ENTRYTIME == 1 || waitress.GlasDelay == 1 || waitress.WashDelay == 1 || BartenderPourBeerTime == 1)
+            {
+                btnIncreaseSpeed.IsEnabled = false; 
+            }
 
         }
 
@@ -93,6 +116,14 @@ namespace Lab6_Pub
             }
         }
 
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            timer.Interval = new TimeSpan(0, 0, 1);
+            lblOpen.Content = string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
+            MAX_OPENTIME--;
+        }
+        
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
             if (open) CloseBar();
@@ -102,6 +133,7 @@ namespace Lab6_Pub
         private void CloseBar()
         {
             open = false;
+            timer.Stop();
             StopBouncer();
             StopBartender();
             StopWaitress();
@@ -109,15 +141,14 @@ namespace Lab6_Pub
 
         private void OpenBar()
         {
-
             open = true;
+            timer.Start();
             Task.Run(() =>
             {
 
                 StartWaitress(waitressCTS.Token); 
                 StartBouncer(bouncerCTS.Token);
                 StartBartender(bartenderCTS.Token);
-
                 Thread.Sleep(MAX_OPENTIME * 1000);
                 open = false;
             });
@@ -148,11 +179,14 @@ namespace Lab6_Pub
                 {
                     if (bartender.TakeGlass() && beerQueue.Count > 0)
                     {
+
+                        
                         var patron = beerQueue.Take();
+                        bartender.PourBeer();
                         patron.BeerDelivery();
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"Poured a beer for {patron.Name}"));
                     }
-                    Thread.Sleep(1000);
+                    Thread.Sleep(DEFAULT_WAIT_TIME* 1000);
                 }
                 Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Bartendern gick hem"));
             });

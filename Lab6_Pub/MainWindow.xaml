@@ -22,7 +22,7 @@
         <Label x:Name="lblGlasses" Content="There are X free Glasses (X Total)" HorizontalAlignment="Left" Margin="760,130,0,0" VerticalAlignment="Top" Width="200"/>
         <Label x:Name="lblTables" Content="There are X free Tables (X Total)" HorizontalAlignment="Left" Margin="760,160,0,0" VerticalAlignment="Top" Width="200"/>
         <Label x:Name="lblOpen" Content="Closes in: " HorizontalAlignment="Left" Margin="760,50,0,0" VerticalAlignment="Top" Width="200"/>
-        <Button x:Name="btnIncreaseSpeed" Content="Increase Speed" HorizontalAlignment="Left" Margin="760,391,0,0" VerticalAlignment="Top" Width="200"/>
+        <Button x:Name="btnIncreaseSpeed" Content="Increase Work Speed" HorizontalAlignment="Left" Margin="760,391,0,0" VerticalAlignment="Top" Width="200"/>
 
     </Grid>
 </Window>

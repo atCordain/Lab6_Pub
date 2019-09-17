@@ -9,13 +9,16 @@ namespace Lab6_Pub
 {
     public class Waitress
     {
-        const int TIME_TO_PICKUP_GLASS = 3; 
-        const int TIME_TO_WASH_GLASS = 3;
+        private int TIMEPICKGLAS = 3;
+        private int TIMETOWASH = 3;
+        private static int glassDelay;
+        private static int washDelay;
         int dirtyGlasses, cleanGlasses;
-
+      
         public Waitress()
         {
-
+            glassDelay = TIMEPICKGLAS;
+            washDelay = TIMETOWASH;
         }
 
         public void PickUpglasses(int dirtyGlasses)
@@ -26,7 +29,7 @@ namespace Lab6_Pub
 
         public void WashGlases()
         {
-            Thread.Sleep(TIME_TO_WASH_GLASS * 1000);
+            Thread.Sleep(washDelay * 1000);
             cleanGlasses = dirtyGlasses;
         }
 
@@ -34,10 +37,16 @@ namespace Lab6_Pub
         {
             return cleanGlasses;
         }
-
+      
         public string Leave()
         {
             return "Waitress has gone home";
         }
+      
+        public int GlasDelay { get { return glassDelay; } internal set { glassDelay = value; } }
+        public int WashDelay { get { return washDelay; } internal set { washDelay = value; } }
+
+
     }
+
 }
