@@ -26,24 +26,27 @@ namespace Lab6_Pub
     {
         public double timeScale = 1;
         public int MAX_OPENTIME = 100;
+
         public const int MAX_GLASSES = 8;
-
         public const int MAX_TABLES = 9;
-        public static int actualGlasses = 0;
-        public static int actualTables = 0;
-        public static int openTime;
 
-        internal const int MAX_ENTRYTIME = 15;
-        internal const int MIN_ENTRYTIME = 10;
+        public static int availableGlasses = 0;
+        public static int availableTables = 0;
+        public static int dirtyGlasses = 0;
 
-        System.Threading.Timer TheTimer = null;
+        public int openTime;
+
+        private const int MAX_ENTRYTIME = 15;
+        private const int MIN_ENTRYTIME = 10;
+
+        private const int DEFAULT_WAIT_TIME = 1;
 
         internal Random random = new Random();
         internal int timeToEntry = 0;
         public static bool open = false;
-        internal static Bouncer bouncer = new Bouncer();
-        public static Waitress waitress = new Waitress();
-        private static Bartender bartender = new Bartender(MAX_GLASSES);
+        private Bouncer bouncer = new Bouncer();
+        private Waitress waitress = new Waitress();
+        private Bartender bartender = new Bartender();
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
         public BlockingCollection<Patron> beerQueue = new BlockingCollection<Patron>();
 
@@ -58,24 +61,19 @@ namespace Lab6_Pub
         {
             InitializeComponent();
 
-            actualGlasses = MAX_GLASSES;
-            actualTables = MAX_TABLES;
+            availableGlasses = MAX_GLASSES;
+            availableTables = MAX_TABLES;
 
-            lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)";
+            lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)";
             lblPatrons.Content = $"There are 0 Patrons in the bar";
-            lblTables.Content = $"There are {actualTables} free Tables ({MAX_TABLES} total)";
+            lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)";
 
-            // Definera listeners på knappklickningarna
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
 
-
-
-            // varje gäst ska ha en task - tommy
-            //Bartenden ska ta emot request från patron - Tommy
         }
 
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
@@ -146,40 +144,37 @@ namespace Lab6_Pub
         {
             Task.Run(() =>
             {
-                while (!token.IsCancellationRequested)
+                while ((open || patrons.Count > 0) && !token.IsCancellationRequested)
                 {
                     if (bartender.TakeGlass() && beerQueue.Count > 0)
                     {
-                        Thread.Sleep(bartender.PourBeerTime * 1000);
-                        vasr patron = beerQueue.Take();
+                        var patron = beerQueue.Take();
                         patron.BeerDelivery();
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"Poured a beer for {patron.Name}"));
                     }
-                    Thread.Sleep(bartender.RestTime * 1000);
+                    Thread.Sleep(1000);
                 }
                 Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Bartendern gick hem"));
             });
         }
         public void StartWaitress(CancellationToken token)
         {
-            var task = Task.Run(() =>
+            Task.Run(() =>
             {
                 while ((open || patrons.Count > 0) && !token.IsCancellationRequested)
                 {
-
-                    Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
-                    waitress.PickUpglasses();
-                    Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
-                    waitress.WashGlases();
-                    Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
-                    waitress.PutOnShelf();
-                    Dispatcher.Invoke(() => lblGlasses.Content = $"There are {actualGlasses} free Glasses ({MAX_GLASSES} total)");
-                    if (actualGlasses == MAX_GLASSES)
+                    if (dirtyGlasses > 0)
                     {
-                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress found 0 glasses"));
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
+                        waitress.PickUpglasses(dirtyGlasses);
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
+                        waitress.WashGlases();
+                        Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
+                        availableGlasses += waitress.PutOnShelf();
+                        Dispatcher.Invoke(() => lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)");
                     }
-                    Thread.Sleep(1000);
-                    Dispatcher.Invoke(() => lbWaitress.Items.Clear());
+
+                    Thread.Sleep(DEFAULT_WAIT_TIME * 1000);
                 }
                 Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress tog en paus"));
             });
@@ -192,8 +187,14 @@ namespace Lab6_Pub
                 patrons.Add(patron);
                 Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
                 Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"Bouncern släppte in {patron.Name}"));
-                Thread.Sleep(patron.EnterWaitTime * 1000);
+                patron.EnterBar();
                 beerQueue.Add(patron);
+                patron.GetBeer();
+                patron.LookForTable();
+                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Sit()));
+                Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
+                patron.DrinkBeer();
+                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
             });
         }
 

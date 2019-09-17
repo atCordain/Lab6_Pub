@@ -9,42 +9,35 @@ namespace Lab6_Pub
 {
     public class Waitress
     {
-        const int TIMEPICKGLAS = 3; 
-        const int TIMETOWASH = 3;
-        public static int glassDelay;
-        public static int WashDelay;
+        const int TIME_TO_PICKUP_GLASS = 3; 
+        const int TIME_TO_WASH_GLASS = 3;
+        int dirtyGlasses, cleanGlasses;
 
         public Waitress()
         {
-            glassDelay = TIMEPICKGLAS;
-            WashDelay = TIMETOWASH;
+
         }
 
-        public void PickUpglasses()
+        public void PickUpglasses(int dirtyGlasses)
         {
-            
-                Thread.Sleep(glassDelay * 1000);
+            Thread.Sleep(TIME_TO_PICKUP_GLASS * 1000);
+            this.dirtyGlasses = dirtyGlasses;
         }
 
         public void WashGlases()
         {
-            Thread.Sleep(WashDelay * 1000);
-
+            Thread.Sleep(TIME_TO_WASH_GLASS * 1000);
+            cleanGlasses = dirtyGlasses;
         }
 
-        public void PutOnShelf()
+        public int PutOnShelf()
         {
-                MainWindow.actualGlasses += 1;
-
+            return cleanGlasses;
         }
 
-  
-
-        public static void GoHome()
+        public string Leave()
         {
-            //När alla besökare har gått så går servitrisen hem.
+            return "Waitress has gone home";
         }
-
-
     }
 }
