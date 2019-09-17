@@ -30,15 +30,12 @@ namespace Lab6_Pub
         public const int MAX_GLASSES = 8;
         public const int MAX_TABLES = 9;
 
-
-        internal int MAX_ENTRYTIME = 15;
-        internal int MIN_ENTRYTIME = 10;
-
         public static int availableGlasses = 0;
         public static int availableTables = 0;
         public static int dirtyGlasses = 0;
 
         public int openTime;
+        private double simulationSpeed = 1;
 
         private const int DEFAULT_WAIT_TIME = 1;
 
@@ -51,7 +48,7 @@ namespace Lab6_Pub
         private Bartender bartender = new Bartender();
         
         public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
-        public BlockingCollection<Patron> beerQueue = new BlockingCollection<Patron>();
+        public static BlockingCollection<Patron> beerQueue = new BlockingCollection<Patron>();
 
         public CancellationTokenSource waitressCTS = new CancellationTokenSource();
         private CancellationTokenSource bouncerCTS = new CancellationTokenSource();
@@ -85,18 +82,20 @@ namespace Lab6_Pub
 
         private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
         {
-
-            MAX_ENTRYTIME = MAX_ENTRYTIME - (SPEED_INCREASE*3);
-            MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3);
-            waitress.GlasDelay = waitress.GlasDelay - SPEED_INCREASE;
-            waitress.WashDelay = waitress.WashDelay - SPEED_INCREASE;
-            BartenderPourBeerTime = BartenderPourBeerTime - SPEED_INCREASE;
-
-            if (MAX_ENTRYTIME == 1 || waitress.GlasDelay == 1 || waitress.WashDelay == 1 || BartenderPourBeerTime == 1)
+            simulationSpeed -= simulationSpeed * 0.5;
+            bartender.SetSpeed(simulationSpeed);
+            waitress.SetSpeed(simulationSpeed);
+            bouncer.SetSpeed(simulationSpeed);
+            foreach(var patron in patrons)
             {
-                btnIncreaseSpeed.IsEnabled = false; 
+                patron.SetSpeed(simulationSpeed);
             }
 
+            //MAX_ENTRYTIME = MAX_ENTRYTIME - (SPEED_INCREASE*3);
+            //MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3);
+
+            if (simulationSpeed < 0.3) btnIncreaseSpeed.IsEnabled = false; 
+            
         }
 
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
@@ -145,7 +144,6 @@ namespace Lab6_Pub
             timer.Start();
             Task.Run(() =>
             {
-
                 StartWaitress(waitressCTS.Token); 
                 StartBouncer(bouncerCTS.Token);
                 StartBartender(bartenderCTS.Token);
@@ -160,12 +158,10 @@ namespace Lab6_Pub
             {
                 while (open && !token.IsCancellationRequested)
                 {
-                    timeToEntry = random.Next(MAX_ENTRYTIME - MIN_ENTRYTIME) + MIN_ENTRYTIME *1000;
                     var patron = bouncer.CreatePatron();
                     patron.BeerQueue = beerQueue;
                     patron.CancellationToken = bouncerCTS.Token;
                     StartPatron(patron);                   
-                    Thread.Sleep(timeToEntry);
                 }
                 Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, "Bouncer gick hem"));
             });
@@ -173,16 +169,16 @@ namespace Lab6_Pub
 
         private void StartBartender(CancellationToken token)
         {
-            Task.Run(() =>
+            var task = Task.Run(() =>
             {
                 while ((open || patrons.Count > 0) && !token.IsCancellationRequested)
                 {
-                    if (bartender.TakeGlass() && beerQueue.Count > 0)
+                    if (availableGlasses > 0 && beerQueue.Count > 0)
                     {
-
-                        
+                        bartender.TakeGlass();
+                        Dispatcher.Invoke(() => lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)");
                         var patron = beerQueue.Take();
-                        bartender.PourBeer();
+                        bartender.PourBeer(patron);
                         patron.BeerDelivery();
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"Poured a beer for {patron.Name}"));
                     }
@@ -201,6 +197,7 @@ namespace Lab6_Pub
                     {
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
                         waitress.PickUpglasses(dirtyGlasses);
+                        dirtyGlasses = 0;
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
                         waitress.WashGlases();
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
@@ -222,13 +219,13 @@ namespace Lab6_Pub
                 Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
                 Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"Bouncern släppte in {patron.Name}"));
                 patron.EnterBar();
-                beerQueue.Add(patron);
-                patron.GetBeer();
+                patron.WaitForBeer();
                 patron.LookForTable();
                 Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Sit()));
                 Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
                 patron.DrinkBeer();
                 Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
+                patrons.Take();
             });
         }
 
@@ -274,7 +271,7 @@ namespace Lab6_Pub
             }
         }
 
-        public void JoinBeerQueue(Patron patron)
+        public static void JoinBeerQueue(Patron patron)
         {
             beerQueue.Add(patron);
         }
