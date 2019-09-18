@@ -1,9 +1,5 @@
 ﻿
-
-using System;
 using System.Threading;
-using System.Timers;
-using System.Windows.Threading;
 
 namespace Lab6_Pub
 {
@@ -47,5 +43,4 @@ namespace Lab6_Pub
             this.speed = speed;
         }
     }
-
 }
