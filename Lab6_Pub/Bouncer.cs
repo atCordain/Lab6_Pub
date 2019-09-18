@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Lab6_Pub
@@ -23,11 +24,16 @@ namespace Lab6_Pub
             return names[random.Next(names.Length)];
         }
 
-        public Patron CreatePatron()
+        public List<Patron> CreatePatron( int numberPatrons)
         {
-            patron = new Patron(CheckID());
+            List<Patron> patrons = new List<Patron>(); 
+
+            for (int i = 0; i < numberPatrons; i++)
+            {
+                patrons.Add(new Patron(CheckID()));
+            }
             Thread.Sleep((int)(random.Next(MAX_ENTRYTIME - MIN_ENTRYTIME) + MIN_ENTRYTIME * speed * 1000));
-            return patron;
+            return patrons;
         }
 
         public void CancelPatrons()
