@@ -19,10 +19,12 @@ namespace Lab6_Pub
 
         }
 
-        public void PickUpglasses(int dirtyGlasses)
+        public void PickUpglasses(ref int dirtyGlasses)
         {
             Thread.Sleep((int)(TIME_TO_PICKUP_GLASS * speed * 1000));
             this.dirtyGlasses = dirtyGlasses;
+
+            dirtyGlasses = 0; 
         }
 
         public void WashGlases()

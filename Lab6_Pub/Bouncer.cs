@@ -21,7 +21,7 @@ namespace Lab6_Pub
 
         private string CheckID()
         {
-            string[] names = { "johan", "Tommy", "Petter" };
+            string[] names = { "Johan", "Tommy", "Petter", "Calle", "Kolle", "Per", "Nisse", "Frippe", "Machmud", "Jonna", "Sara" };
             return names[random.Next(names.Length)];
         }
 

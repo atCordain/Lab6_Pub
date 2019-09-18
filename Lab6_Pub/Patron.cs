@@ -18,7 +18,7 @@ namespace Lab6_Pub
         private const int MAX_DRINKTIME = 20;
         private const int MIN_DRINKTIME = 10;
         private const int DEFAULT_CHECK_TIME = 1;
-        private BlockingCollection<Patron> beerQueue;
+        private List<Patron> beerQueue;
         private CancellationToken cancellationToken;
         private double speed = 1;
 
@@ -70,6 +70,9 @@ namespace Lab6_Pub
             MainWindow.dirtyGlasses += 1;
             MainWindow.availableTables += 1;
             return $"{Name} left the bar.";
+
+           
+
         }
         public void SetSpeed(double speed)
         {
@@ -77,7 +80,7 @@ namespace Lab6_Pub
         }
 
         public string Name { get => name; set => name = value; }
-        public BlockingCollection<Patron> BeerQueue { get => beerQueue; set => beerQueue = value; }
+        public List<Patron> BeerQueue { get => beerQueue; set => beerQueue = value; }
         public CancellationToken CancellationToken { get => cancellationToken; set => cancellationToken = value; }
 
         public void BeerDelivery()
