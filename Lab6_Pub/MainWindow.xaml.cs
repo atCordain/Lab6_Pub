@@ -12,13 +12,15 @@ namespace Lab6_Pub
     {
         public const int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
-        public const int MAX_TABLES = 9;
+        public const int MAX_TABLES = 9; 
         private const int DEFAULT_WAIT_TIME = 1;
+        private const int PATRONS_PER_ENTRY = 1; 
 
         public static int availableGlasses = 0;
         public static int availableTables = 0;
         public static int dirtyGlasses = 0;
-        public static int maxOpenTime = 0; 
+        public static int maxOpenTime = 0;
+        public static int timeRun = 0; 
 
         public int openTime;
 
@@ -26,6 +28,7 @@ namespace Lab6_Pub
 
         public bool bartenderIsWaiting = false;
         public static bool open = false;
+        private bool busLoadCase = false;
 
         private Bouncer bouncer = new Bouncer();
         private Waitress waitress = new Waitress();
@@ -96,15 +99,18 @@ namespace Lab6_Pub
         {
             if (open)
             {
+                timeRun += 1; 
                 timer.Interval = new TimeSpan(0, 0, 1);
-                lblOpen.Content = "Closes in" + string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
+                lblOpen.Content = string.Format("00:0{0}:{1}", maxOpenTime / 60, maxOpenTime % 60);
                 maxOpenTime--;
+
             } else
             {
                 timer.Stop();
                 lblOpen.Content = string.Format("00:00:00");
 
             }
+            
         }
         
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
@@ -127,11 +133,6 @@ namespace Lab6_Pub
             open = true;
             timer.Start();
 
-            if (timer.Equals("00:00:00"))
-            {
-                timer.Stop(); 
-            }
-
             Task.Run(() =>
             {
                 StartWaitress(waitressCTS.Token); 
@@ -148,10 +149,24 @@ namespace Lab6_Pub
             {
                 while (open && !token.IsCancellationRequested)
                 {
-                    var patron = bouncer.CreatePatron();
-                    patron.BeerQueue = beerQueue;
-                    patron.CancellationToken = bouncerCTS.Token;
-                    StartPatron(patron);                   
+                    List<Patron> createPatron; 
+
+                    if (timeRun > 20 && busLoadCase)
+                    {
+                        createPatron = bouncer.CreatePatron(15);
+                        busLoadCase = false; 
+                    }
+                    else
+                    {
+                        createPatron = bouncer.CreatePatron(PATRONS_PER_ENTRY);
+                    }
+
+                    foreach (var patron in createPatron)
+                    {
+                        patron.BeerQueue = beerQueue;
+                        patron.CancellationToken = bouncerCTS.Token;
+                        StartPatron(patron);
+                    }                   
                 }
                 Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, "Bouncer gick hem"));
             });
