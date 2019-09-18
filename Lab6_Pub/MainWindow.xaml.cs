@@ -34,6 +34,8 @@ namespace Lab6_Pub
         public static int availableTables = 0;
         public static int dirtyGlasses = 0;
 
+        public bool bartenderIsWaiting = false; 
+
         public int openTime;
         private double simulationSpeed = 1;
 
@@ -47,13 +49,18 @@ namespace Lab6_Pub
         private Waitress waitress = new Waitress();
         private Bartender bartender = new Bartender();
         
-        public BlockingCollection<Patron> patrons = new BlockingCollection<Patron>();
-        public static BlockingCollection<Patron> beerQueue = new BlockingCollection<Patron>();
+        public List<Patron> patrons = new List<Patron>();
+        public static List<Patron> beerQueue = new List<Patron>();
 
         public CancellationTokenSource waitressCTS = new CancellationTokenSource();
         private CancellationTokenSource bouncerCTS = new CancellationTokenSource();
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
 
+
+
+        //TODOS 
+        // Plocka ur kön i ordning  - Petter 
+        // Alla Patrons skall avbrytas - Tommy
 
 
         public DispatcherTimer timer = new DispatcherTimer();
@@ -118,9 +125,17 @@ namespace Lab6_Pub
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            timer.Interval = new TimeSpan(0, 0, 1);
-            lblOpen.Content = string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
-            MAX_OPENTIME--;
+            if (open)
+            {
+                timer.Interval = new TimeSpan(0, 0, 1);
+                lblOpen.Content = string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
+                MAX_OPENTIME--;
+            } else
+            {
+                timer.Stop();
+                lblOpen.Content = string.Format("00:00:00");
+
+            }
         }
         
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
@@ -142,6 +157,13 @@ namespace Lab6_Pub
         {
             open = true;
             timer.Start();
+
+            if (timer.Equals("00:00:00"))
+            {
+                timer.Stop(); 
+            }
+
+
             Task.Run(() =>
             {
                 StartWaitress(waitressCTS.Token); 
@@ -175,12 +197,20 @@ namespace Lab6_Pub
                 {
                     if (availableGlasses > 0 && beerQueue.Count > 0)
                     {
+                        bartenderIsWaiting = false;
+                        Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Bartender goes to shelf"));
                         bartender.TakeGlass();
                         Dispatcher.Invoke(() => lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)");
-                        var patron = beerQueue.Take();
+                        var patron = beerQueue.ElementAt(0); 
                         bartender.PourBeer(patron);
+                        beerQueue.RemoveAt(0); 
                         patron.BeerDelivery();
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"Poured a beer for {patron.Name}"));
+                    }
+                    else if (!bartenderIsWaiting)
+                    {
+                        Dispatcher.Invoke(() => lbBartender.Items.Insert(0, "Waiting in the bar"));
+                        bartenderIsWaiting = true;
                     }
                     Thread.Sleep(DEFAULT_WAIT_TIME* 1000);
                 }
@@ -191,13 +221,12 @@ namespace Lab6_Pub
         {
             Task.Run(() =>
             {
-                while ((open || patrons.Count > 0) && !token.IsCancellationRequested)
+                while ((open || patrons.Count > 0 || availableGlasses < MAX_GLASSES) && !token.IsCancellationRequested)
                 {
                     if (dirtyGlasses > 0)
                     {
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is picking glasses"));
-                        waitress.PickUpglasses(dirtyGlasses);
-                        dirtyGlasses = 0;
+                        waitress.PickUpglasses(ref dirtyGlasses);
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress is washing glasses"));
                         waitress.WashGlases();
                         Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress put the glasses on the shelf"));
@@ -207,7 +236,8 @@ namespace Lab6_Pub
 
                     Thread.Sleep(DEFAULT_WAIT_TIME * 1000);
                 }
-                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, "Waitress tog en paus"));
+                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, waitress.Leave())); ;
+
             });
         }
 
@@ -215,18 +245,20 @@ namespace Lab6_Pub
         {
             Task.Run(() =>
             {
-                if (!patron.CancellationToken.IsCancellationRequested) patrons.Add(patron);
-                if (!patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
-                if (!patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"Bouncern släppte in {patron.Name}"));
-                if (!patron.CancellationToken.IsCancellationRequested) patron.EnterBar();
-                if (!patron.CancellationToken.IsCancellationRequested) patron.WaitForBeer();
-                if (!patron.CancellationToken.IsCancellationRequested) patron.LookForTable();
-                if (!patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Sit()));
-                if (!patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
-                if (!patron.CancellationToken.IsCancellationRequested) patron.DrinkBeer();
-                if (!patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
-                if (!patron.CancellationToken.IsCancellationRequested) patrons.Take();
-                if (patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} cancelled his visit"));
+                if(!patron.CancellationToken.IsCancellationRequested)patrons.Add(patron);
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} goes to the bar."));
+                if(!patron.CancellationToken.IsCancellationRequested)patron.EnterBar();
+                if(!patron.CancellationToken.IsCancellationRequested)patron.WaitForBeer();
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} looks for chair"));
+                if(!patron.CancellationToken.IsCancellationRequested)patron.LookForTable();
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Sit()));
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
+                if(!patron.CancellationToken.IsCancellationRequested)patron.DrinkBeer();
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
+                if(!patron.CancellationToken.IsCancellationRequested)patrons.Remove(patron);
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
             });
         }
 
