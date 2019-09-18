@@ -245,21 +245,20 @@ namespace Lab6_Pub
         {
             Task.Run(() =>
             {
-                patrons.Add(patron);
-                Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
-                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} goes to the bar."));
-                patron.EnterBar();
-                patron.WaitForBeer();
-                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} looks for chair"));
-                patron.LookForTable();
-                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Sit()));
-                Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
-                patron.DrinkBeer();
-                Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
-                patrons.Remove(patron);
-                Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
-                Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
-
+                if(!patron.CancellationToken.IsCancellationRequested)patrons.Add(patron);
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} goes to the bar."));
+                if(!patron.CancellationToken.IsCancellationRequested)patron.EnterBar();
+                if(!patron.CancellationToken.IsCancellationRequested)patron.WaitForBeer();
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} looks for chair"));
+                if(!patron.CancellationToken.IsCancellationRequested)patron.LookForTable();
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Sit()));
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
+                if(!patron.CancellationToken.IsCancellationRequested)patron.DrinkBeer();
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
+                if(!patron.CancellationToken.IsCancellationRequested)patrons.Remove(patron);
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblPatrons.Content = $"There are {patrons.Count} Patrons in the bar");
+                if(!patron.CancellationToken.IsCancellationRequested)Dispatcher.Invoke(() => lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)");
             });
         }
 
