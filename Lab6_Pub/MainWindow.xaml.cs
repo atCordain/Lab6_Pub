@@ -1,50 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Timers;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Windows.Threading;
 
 namespace Lab6_Pub
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        public int MAX_OPENTIME = 100;
-        public const int SPEED_INCREASE = 1;
-        
+        public const int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
         public const int MAX_TABLES = 9;
+        private const int DEFAULT_WAIT_TIME = 1;
 
         public static int availableGlasses = 0;
         public static int availableTables = 0;
         public static int dirtyGlasses = 0;
-
-        public bool bartenderIsWaiting = false; 
+        public static int maxOpenTime = 0; 
 
         public int openTime;
+
         private double simulationSpeed = 1;
 
-        private const int DEFAULT_WAIT_TIME = 1;
-
-
-        internal Random random = new Random();
-        internal int timeToEntry = 0;
+        public bool bartenderIsWaiting = false;
         public static bool open = false;
+
         private Bouncer bouncer = new Bouncer();
         private Waitress waitress = new Waitress();
         private Bartender bartender = new Bartender();
@@ -56,13 +38,6 @@ namespace Lab6_Pub
         private CancellationTokenSource bouncerCTS = new CancellationTokenSource();
         private CancellationTokenSource bartenderCTS = new CancellationTokenSource();
 
-
-
-        //TODOS 
-        // Plocka ur kön i ordning  - Petter 
-        // Alla Patrons skall avbrytas - Tommy
-
-
         public DispatcherTimer timer = new DispatcherTimer();
 
         public MainWindow()
@@ -71,20 +46,19 @@ namespace Lab6_Pub
 
             availableGlasses = MAX_GLASSES;
             availableTables = MAX_TABLES;
+            maxOpenTime = MAX_OPENTIME; 
 
             lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)";
             lblPatrons.Content = $"There are 0 Patrons in the bar";
             lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)";
-
+          
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
             btnIncreaseSpeed.Click += IncreaseSpeed_Click; 
-            timer.Tick += timer_Tick;
-            
-
+            timer.Tick += timer_Tick;  
         }
 
         private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
@@ -98,11 +72,7 @@ namespace Lab6_Pub
                 patron.SetSpeed(simulationSpeed);
             }
 
-            //MAX_ENTRYTIME = MAX_ENTRYTIME - (SPEED_INCREASE*3);
-            //MIN_ENTRYTIME = MIN_ENTRYTIME - (SPEED_INCREASE * 3);
-
             if (simulationSpeed < 0.3) btnIncreaseSpeed.IsEnabled = false; 
-            
         }
 
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
@@ -122,14 +92,13 @@ namespace Lab6_Pub
             }
         }
 
-
         private void timer_Tick(object sender, EventArgs e)
         {
             if (open)
             {
                 timer.Interval = new TimeSpan(0, 0, 1);
-                lblOpen.Content = string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
-                MAX_OPENTIME--;
+                lblOpen.Content = "Closes in" + string.Format("00:0{0}:{1}", MAX_OPENTIME / 60, MAX_OPENTIME % 60);
+                maxOpenTime--;
             } else
             {
                 timer.Stop();
@@ -162,7 +131,6 @@ namespace Lab6_Pub
             {
                 timer.Stop(); 
             }
-
 
             Task.Run(() =>
             {
@@ -233,11 +201,9 @@ namespace Lab6_Pub
                         availableGlasses += waitress.PutOnShelf();
                         Dispatcher.Invoke(() => lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)");
                     }
-
                     Thread.Sleep(DEFAULT_WAIT_TIME * 1000);
                 }
-                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, waitress.Leave())); ;
-
+                Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, waitress.Leave())); 
             });
         }
 
@@ -291,7 +257,6 @@ namespace Lab6_Pub
 
         private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
         {
-
             if (waitressCTS.IsCancellationRequested)
             {
                 waitressCTS = new CancellationTokenSource();

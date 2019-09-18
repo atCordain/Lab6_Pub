@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Threading;
 
 namespace Lab6_Pub
@@ -9,7 +8,6 @@ namespace Lab6_Pub
         private int MAX_ENTRYTIME = 15;
         private int MIN_ENTRYTIME = 10;
 
-        // TODO eventuellt Singleton.
         private Random random = new Random();
         private Patron patron;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();

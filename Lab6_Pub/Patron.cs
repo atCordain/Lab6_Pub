@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Lab6_Pub
 {
@@ -70,10 +68,8 @@ namespace Lab6_Pub
             MainWindow.dirtyGlasses += 1;
             MainWindow.availableTables += 1;
             return $"{Name} left the bar.";
-
-           
-
         }
+
         public void SetSpeed(double speed)
         {
             this.speed = speed;

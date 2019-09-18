@@ -1,19 +1,10 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Threading;
+﻿using System.Threading;
 
 namespace Lab6_Pub
 {
     public class Bartender
     {
         private const int POUR_BEER_TIME = 3;
-        private const int REST_TIME = 1;
         private double speed = 1;
 
         public Bartender()
