@@ -226,6 +226,7 @@ namespace Lab6_Pub
                 if (!patron.CancellationToken.IsCancellationRequested) patron.DrinkBeer();
                 if (!patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, patron.Leave()));
                 if (!patron.CancellationToken.IsCancellationRequested) patrons.Take();
+                if (patron.CancellationToken.IsCancellationRequested) Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{patron.Name} cancelled his visit"));
             });
         }
 
