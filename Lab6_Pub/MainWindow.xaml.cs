@@ -10,6 +10,8 @@ namespace Lab6_Pub
 {
     public partial class MainWindow : Window
     {
+        private Bar bar;
+
         public const int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
         public const int MAX_TABLES = 9; 
@@ -46,22 +48,28 @@ namespace Lab6_Pub
         public MainWindow()
         {
             InitializeComponent();
-
+            bar = new Bar();
+            bar.Run();
             availableGlasses = MAX_GLASSES;
             availableTables = MAX_TABLES;
-            maxOpenTime = MAX_OPENTIME; 
+            maxOpenTime = MAX_OPENTIME;
 
-            lblGlasses.Content = $"There are {availableGlasses} free Glasses ({MAX_GLASSES} total)";
-            lblPatrons.Content = $"There are 0 Patrons in the bar";
-            lblTables.Content = $"There are {availableTables} free Tables ({MAX_TABLES} total)";
-          
+            UpdateStatusLabels();
+
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
-            btnIncreaseSpeed.Click += IncreaseSpeed_Click; 
-            timer.Tick += timer_Tick;  
+            btnIncreaseSpeed.Click += IncreaseSpeed_Click;
+            timer.Tick += timer_Tick;
+        }
+
+        private void UpdateStatusLabels()
+        {
+            lblGlasses.Content = $"There are {bar.AvailableGlasses} free Glasses ({bar.TotalGlassesInBar} total)";
+            lblPatrons.Content = $"There are {bar.PatronsInBar} Patrons in the bar";
+            lblTables.Content = $"There are {bar.AvailableTables} free Tables ({bar.TotalTablesInBar} total)";
         }
 
         private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)

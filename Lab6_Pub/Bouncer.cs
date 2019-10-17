@@ -32,7 +32,7 @@ namespace Lab6_Pub
             {
                 patrons.Add(new Patron(CheckID()));
             }
-            Thread.Sleep((int)(random.Next(MAX_ENTRYTIME - MIN_ENTRYTIME) + MIN_ENTRYTIME * speed * 1000));
+            Thread.Sleep(GetSleepTime());
             return patrons;
         }
 
@@ -45,5 +45,7 @@ namespace Lab6_Pub
         {
             this.speed = speed;
         }
+
+        public int GetSleepTime() => (int)(random.Next(MAX_ENTRYTIME - MIN_ENTRYTIME) + MIN_ENTRYTIME * speed * 1000);
     }
 }
