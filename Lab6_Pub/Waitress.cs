@@ -14,12 +14,11 @@ namespace Lab6_Pub
 
         private Queue<Action> actions;
         private Patron patronToServe;
-
-
-        private int TIME_TO_PICKUP_GLASS = 3;
-        private int TIME_TO_WASH_GLASS = 3;
+        private int timeToPickUpDirtyGlasses = 3;
+        private int timeToWashDirtyGlasses = 3;
         int dirtyGlasses, cleanGlasses;
-        private double speed = 1;
+
+        //private double speed = 1;
 
         public Waitress()
         {
@@ -27,31 +26,13 @@ namespace Lab6_Pub
             Initialize();
         }
 
-        public void PickUpglasses(ref int dirtyGlasses)
+        public override void Initialize()
         {
-            Thread.Sleep((int)(TIME_TO_PICKUP_GLASS * speed * 1000));
-            this.dirtyGlasses = dirtyGlasses;
-
-            dirtyGlasses = 0; 
-        }
-
-        public void WashGlases()
-        {
-            
-        }
-
-        public int PutOnShelf()
-        {
-            return cleanGlasses;
-        }
-      
-        public string Leave()
-        {
-            return "Waitress has gone home";
-        }
-        public void SetSpeed(double speed)
-        {
-            this.speed = speed;
+            actions.Clear();
+            actions.Enqueue(PickUpDirtyGlasses);
+            actions.Enqueue(WashDirtyGlasses);
+            actions.Enqueue(PutCleanGlassesOnShelf);
+            actions.Enqueue(Initialize);
         }
 
         public override void Run()
@@ -96,24 +77,16 @@ namespace Lab6_Pub
             //throw new System.NotImplementedException();
         }
 
-        public override void Initialize()
-        {
-            actions.Clear();
-            actions.Enqueue(PickUpDirtyGlasses);
-            actions.Enqueue(WashDirtyGlasses);
-            actions.Enqueue(PutCleanGlassesOnShelf);
-            actions.Enqueue(Initialize);
-        }
         private void PickUpDirtyGlasses()
         {
-            Thread.Sleep((int)(TIME_TO_PICKUP_GLASS * speed * 1000));
+            Thread.Sleep((int)(timeToPickUpDirtyGlasses * 1000));
             dirtyGlasses = Bar.DirtyGlasses;
             Bar.DirtyGlasses = 0;
             LogThis(this, new EventMessage($"Picked up {dirtyGlasses} dirty glasses"));
         }
         private void WashDirtyGlasses()
         {
-            Thread.Sleep((int)(TIME_TO_WASH_GLASS * speed * 1000));
+            Thread.Sleep((int)(timeToWashDirtyGlasses * 1000));
             cleanGlasses = dirtyGlasses;
             LogThis(this, new EventMessage($"Washed the glasses"));
         }
@@ -123,5 +96,31 @@ namespace Lab6_Pub
             dirtyGlasses = 0;
             LogThis(this, new EventMessage($"Put the clean glasses on shelf"));
         }
+        //public void PickUpglasses(ref int dirtyGlasses)
+        //{
+        //    Thread.Sleep((int)(timeToPickUpDirtyGlasses * speed * 1000));
+        //    this.dirtyGlasses = dirtyGlasses;
+        //
+        //    dirtyGlasses = 0; 
+        //}
+        //
+        //public void WashGlases()
+        //{
+        //    
+        //}
+        //
+        //public int PutOnShelf()
+        //{
+        //    return cleanGlasses;
+        //}
+        //
+        //public string Leave()
+        //{
+        //    return "Waitress has gone home";
+        //}
+        //public void SetSpeed(double speed)
+        //{
+        //    this.speed = speed;
+        //}
     }
 }

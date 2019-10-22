@@ -12,52 +12,19 @@ namespace Lab6_Pub
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken token;
 
-        private int MAX_ENTRYTIME = 15;
-        private int MIN_ENTRYTIME = 10;
-        private int SleepTime = 5000;
+        private int MaxEntryTime = 15;
+        private int MinEntryTime = 10;
 
         private Random random = new Random();
-        private Patron patron;
-        private double speed = 1;
-
         private Action<Patron> addPatronToAgents;
+
+        //private Patron patron;
+        //private double speed = 1;
 
         public Bouncer(Action<Patron> addPatronToAgents)
         {
             this.addPatronToAgents = addPatronToAgents;
         }
-
-        public Bouncer() { }
-
-        private string CheckID()
-        {
-            string[] names = { "Johan", "Tommy", "Petter", "Calle", "Kolle", "Per", "Nisse", "Frippe", "Machmud", "Jonna", "Sara" };
-            return names[random.Next(names.Length)];
-        }
-
-        public List<Patron> CreatePatron( int numberPatrons)
-        {
-            List<Patron> patrons = new List<Patron>(); 
-
-            for (int i = 0; i < numberPatrons; i++)
-            {
-                patrons.Add(new Patron(CheckID()));
-            }
-            Thread.Sleep(GetSleepTime());
-            return patrons;
-        }
-
-        public void CancelPatrons()
-        {
-            cancellationTokenSource.Cancel();
-        }
-
-        public void SetSpeed(double speed)
-        {
-            this.speed = speed;
-        }
-
-        public int GetSleepTime() => (int)(random.Next(MAX_ENTRYTIME - MIN_ENTRYTIME) + MIN_ENTRYTIME * speed * 1000);
 
         public override void Initialize()
         {
@@ -73,7 +40,7 @@ namespace Lab6_Pub
                 while (!token.IsCancellationRequested && Bar.IsBarOpen)
                 {
                     LetPatronIn();
-                    Thread.Sleep(SleepTime);
+                    Thread.Sleep(random.Next(MaxEntryTime - MinEntryTime) + MinEntryTime * 1000);
                 }
             }, token);
         }
@@ -100,5 +67,35 @@ namespace Lab6_Pub
         {
             LogThis(this, new EventMessage($"Bouncer went home (End)"));
         }
+        //public Bouncer() { }
+
+        //private string CheckID()
+        //{
+        //    string[] names = { "Johan", "Tommy", "Petter", "Calle", "Kolle", "Per", "Nisse", "Frippe", "Machmud", "Jonna", "Sara" };
+        //    return names[random.Next(names.Length)];
+        //}
+        //public List<Patron> CreatePatron( int numberPatrons)
+        //{
+        //    List<Patron> patrons = new List<Patron>(); 
+        //
+        //    for (int i = 0; i < numberPatrons; i++)
+        //    {
+        //        patrons.Add(new Patron(CheckID()));
+        //    }
+        //    Thread.Sleep(GetSleepTime());
+        //    return patrons;
+        //}
+        //
+        //public void CancelPatrons()
+        //{
+        //    cancellationTokenSource.Cancel();
+        //}
+        //
+        //public void SetSpeed(double speed)
+        //{
+        //    this.speed = speed;
+        //}
+        //
+        //public int GetSleepTime() => (int)(random.Next(MaxEntryTime - MinEntryTime) + MinEntryTime * speed * 1000);
     }
 }

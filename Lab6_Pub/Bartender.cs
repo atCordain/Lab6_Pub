@@ -16,25 +16,12 @@ namespace Lab6_Pub
 
         private Patron patronToServe;
 
-        private const int POUR_BEER_TIME = 3;
-        private double speed = 1;
+        private const int TimeToPourBeer = 3;
 
         public Bartender()
         {
             actions = new Queue<Action>();
             Initialize();
-        }
-
-        public string PourBeer(Patron patron)
-        {
-            Thread.Sleep((int)(POUR_BEER_TIME * speed * 1000));
-            patron.GiveBeer();
-            return $"Poured a beer for {patron.Name}";
-        }
-
-        public void SetSpeed(double speed)
-        {
-            this.speed = speed;
         }
 
         public override void Initialize()
@@ -90,7 +77,7 @@ namespace Lab6_Pub
         }
         private void PourBeer()
         {
-            Thread.Sleep((int)(POUR_BEER_TIME * speed * 1000));
+            Thread.Sleep(TimeToPourBeer * 1000);
         }
 
         private void GiveBeer()
@@ -99,5 +86,16 @@ namespace Lab6_Pub
             patronToServe.GiveBeer();
             LogThis(this, new EventMessage($"Poured a beer for {patronToServe.Name}"));
         }
+        //public string PourBeer(Patron patron)
+        //{
+        //    Thread.Sleep(TimeToPourBeer * 1000);
+        //    patron.GiveBeer();
+        //    return $"Poured a beer for {patron.Name}";
+        //}
+        //
+        //public void SetSpeed(double speed)
+        //{
+        //    this.speed = speed;
+        //}
     }
 }
