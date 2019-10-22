@@ -122,21 +122,5 @@ namespace Lab6_Pub
         {
             hasTable = true;
         }
-        //public string Leave()
-        //{
-        //    MainWindow.dirtyGlasses += 1;
-        //    MainWindow.availableTables += 1;
-        //    return $"{Name} left the bar.";
-        //}
-        //public string Sit()
-        //{
-        //    return $"{Name} sat at a table";
-        //}
-        //public void SetSpeed(double speed)
-        //{
-        //    this.speed = speed;
-        //}
-        //public List<Patron> BeerQueue { get => beerQueue; set => beerQueue = value; }
-        //public CancellationToken CancellationToken { get => cancellationToken; set => cancellationToken = value; }
     }
 }

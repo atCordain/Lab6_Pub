@@ -86,16 +86,5 @@ namespace Lab6_Pub
             patronToServe.GiveBeer();
             LogThis(this, new EventMessage($"Poured a beer for {patronToServe.Name}"));
         }
-        //public string PourBeer(Patron patron)
-        //{
-        //    Thread.Sleep(TimeToPourBeer * 1000);
-        //    patron.GiveBeer();
-        //    return $"Poured a beer for {patron.Name}";
-        //}
-        //
-        //public void SetSpeed(double speed)
-        //{
-        //    this.speed = speed;
-        //}
     }
 }

@@ -18,8 +18,6 @@ namespace Lab6_Pub
         private int timeToWashDirtyGlasses = 3;
         int dirtyGlasses, cleanGlasses;
 
-        //private double speed = 1;
-
         public Waitress()
         {
             actions = new Queue<Action>();
@@ -96,31 +94,5 @@ namespace Lab6_Pub
             dirtyGlasses = 0;
             LogThis(this, new EventMessage($"Put the clean glasses on shelf"));
         }
-        //public void PickUpglasses(ref int dirtyGlasses)
-        //{
-        //    Thread.Sleep((int)(timeToPickUpDirtyGlasses * speed * 1000));
-        //    this.dirtyGlasses = dirtyGlasses;
-        //
-        //    dirtyGlasses = 0; 
-        //}
-        //
-        //public void WashGlases()
-        //{
-        //    
-        //}
-        //
-        //public int PutOnShelf()
-        //{
-        //    return cleanGlasses;
-        //}
-        //
-        //public string Leave()
-        //{
-        //    return "Waitress has gone home";
-        //}
-        //public void SetSpeed(double speed)
-        //{
-        //    this.speed = speed;
-        //}
     }
 }

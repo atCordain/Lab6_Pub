@@ -18,9 +18,6 @@ namespace Lab6_Pub
         private Random random = new Random();
         private Action<Patron> addPatronToAgents;
 
-        //private Patron patron;
-        //private double speed = 1;
-
         public Bouncer(Action<Patron> addPatronToAgents)
         {
             this.addPatronToAgents = addPatronToAgents;
@@ -67,35 +64,5 @@ namespace Lab6_Pub
         {
             LogThis(this, new EventMessage($"Bouncer went home (End)"));
         }
-        //public Bouncer() { }
-
-        //private string CheckID()
-        //{
-        //    string[] names = { "Johan", "Tommy", "Petter", "Calle", "Kolle", "Per", "Nisse", "Frippe", "Machmud", "Jonna", "Sara" };
-        //    return names[random.Next(names.Length)];
-        //}
-        //public List<Patron> CreatePatron( int numberPatrons)
-        //{
-        //    List<Patron> patrons = new List<Patron>(); 
-        //
-        //    for (int i = 0; i < numberPatrons; i++)
-        //    {
-        //        patrons.Add(new Patron(CheckID()));
-        //    }
-        //    Thread.Sleep(GetSleepTime());
-        //    return patrons;
-        //}
-        //
-        //public void CancelPatrons()
-        //{
-        //    cancellationTokenSource.Cancel();
-        //}
-        //
-        //public void SetSpeed(double speed)
-        //{
-        //    this.speed = speed;
-        //}
-        //
-        //public int GetSleepTime() => (int)(random.Next(MaxEntryTime - MinEntryTime) + MinEntryTime * speed * 1000);
     }
 }
