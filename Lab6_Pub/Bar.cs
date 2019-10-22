@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,99 +8,122 @@ namespace Lab6_Pub
 {
     class Bar
     {
-        // Initial values
         private const int totalGlassesInBar = 8;
         private const int totalTablesInBar = 9;
         public int TotalGlassesInBar => totalGlassesInBar;
         public int TotalTablesInBar => totalTablesInBar;
+        public const int DefaultWaitTime = 1;
+        private static int patronsInBar;
+        private static bool isBarOpen;
+        public static int AvailableGlasses { get; set; }
+        public static int AvailableTables { get; set; }
+        public static int PatronsInBar => patronsInBar;
+        public static bool IsBarOpen => isBarOpen;
 
-        // fields
-        private int availableGlasses;
-        private int availableTables;
-        private int patronsInBar;
-        private bool isBarOpen;
-        public int AvailableGlasses => availableGlasses; 
-        public int AvailableTables => availableTables; 
-        public int PatronsInBar => patronsInBar;
-        public bool IsBarOpen => isBarOpen;
+        public static int DirtyGlasses { get;  set; }
 
         // Agents
+        private static BlockingCollection<Agent> agents;
         private Bartender bartender;
-        private Waitress waitress;
         private Bouncer bouncer;
-        private BlockingCollection<Patron> patrons;
+        private Waitress waitress;
 
-        // Task management
-        CancellationTokenSource bartenderCancellationTokenSource = new CancellationTokenSource();
-        CancellationTokenSource waitressCancellationTokenSource = new CancellationTokenSource();
-        CancellationTokenSource bouncerCancellationTokenSource = new CancellationTokenSource();
-        CancellationTokenSource patronCancellationTokenSource = new CancellationTokenSource();
-
+        // Queues
+        public static ConcurrentQueue<Patron> beerQueue = new ConcurrentQueue<Patron>();
+        public static ConcurrentQueue<Patron> tableQueue = new ConcurrentQueue<Patron>();
 
         public Bar()
         {
+            agents = new BlockingCollection<Agent>();
             bartender = new Bartender();
+            bouncer = new Bouncer(RunPatron);
             waitress = new Waitress();
-            bouncer = new Bouncer();
-            availableGlasses = totalGlassesInBar;
-            availableTables = totalTablesInBar;
+            agents.Add(bartender);
+            agents.Add(bouncer);
+            agents.Add(waitress);
+            AvailableGlasses = totalGlassesInBar;
+            AvailableTables = totalTablesInBar;
             isBarOpen = false;
+        }
+
+        public void OpenBar()
+        {
+            isBarOpen = true;
+            Run();
+        }
+
+        public void CloseBar()
+        {
+            isBarOpen = false;
+            foreach (var agent in agents)
+            {
+                agent.End();
+            }
         }
 
         public void Run()
         {
-            isBarOpen = true;
-            StartBartender(bartenderCancellationTokenSource.Token);
-            StartWaitress(waitressCancellationTokenSource.Token);
-            StartBouncer(bouncerCancellationTokenSource.Token);
-        }
-
-        private void StartBartender(CancellationToken token)
-        {
-            Task.Run(() => 
-            { 
-                
-            
-            }, token);
-        }
-
-        private void StartWaitress(CancellationToken token)
-        {
-            Task.Run(() => 
-            { 
-            
-            }, token);
-            
-        }
-
-        private void StartBouncer(CancellationToken token)
-        {
-            Task.Run(() =>
+            foreach (var agent in agents)
             {
-                while (!token.IsCancellationRequested && IsBarOpen)
-                {
-                    CreateAndStartPatrons();
-                    Thread.Sleep(bouncer.GetSleepTime());
-                }
-            }, token);
-        }
-
-        private void CreateAndStartPatrons()
-        {
-            foreach (var patron in bouncer.CreatePatron(1))
-            {
-                patrons.Add(patron);
-                patronsInBar = patrons.Count;
-                StartPatron(patron, patronCancellationTokenSource.Token);
+                agent.Run();
             }
         }
 
-        private void StartPatron(Patron patron, CancellationToken token)
+        public void Cancel()
         {
-            Task.Run(() =>
+            foreach (var agent in agents)
             {
+                agent.Cancel();
+            }
+        }
 
-            }, token);
+        public void CancelBartender()
+        {
+            bartender.Cancel();
+        }
+        public void CancelWaitress()
+        {
+            waitress.Cancel();
+        }
+
+        public void CancelBouncerAndPatrons()
+        {
+            bouncer.Cancel();
+            foreach (var agent in agents)
+            {
+                if (agent is Patron patron)
+                {
+                    patron.Cancel();
+                }
+            }
+        }
+
+        public void RunPatron(Patron patron)
+        {
+            agents.Add(patron);
+            patron.Run();
+        }
+
+        internal static void JoinBeerQueue(Patron patron)
+        {
+            beerQueue.Enqueue(patron);
+        }
+
+        internal static void JoinTableQueue(Patron patron)
+        {
+            tableQueue.Enqueue(patron);
+        }
+
+        internal static bool IsBarEmpty()
+        {
+            foreach (var agent in agents)
+            {
+                if (agent is Patron)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

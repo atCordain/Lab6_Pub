@@ -11,7 +11,7 @@ namespace Lab6_Pub
     public partial class MainWindow : Window
     {
         private Bar bar;
-
+        private int logIndex;
         public const int MAX_OPENTIME = 100;
         public const int MAX_GLASSES = 8;
         public const int MAX_TABLES = 9; 
@@ -48,28 +48,59 @@ namespace Lab6_Pub
         public MainWindow()
         {
             InitializeComponent();
-            bar = new Bar();
-            bar.Run();
-            availableGlasses = MAX_GLASSES;
-            availableTables = MAX_TABLES;
-            maxOpenTime = MAX_OPENTIME;
-
-            UpdateStatusLabels();
-
+            logIndex = 0;
+            
             btnPauseBartender.Click += BtnPauseBartender_Click;
             btnPauseWaitress.Click += BtnPauseWaitress_Click;
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
             btnIncreaseSpeed.Click += IncreaseSpeed_Click;
-            timer.Tick += timer_Tick;
+
+            Bouncer.LogThis += Bouncer_LogThis;
+            Patron.LogThis += Patron_LogThis;
+            Bartender.LogThis += Bartender_LogThis;
+            Waitress.LogThis += Waitress_LogThis;
+
+            bar = new Bar();
+            bar.OpenBar();
+
+            UpdateStatusLabels();
+
+            //availableGlasses = MAX_GLASSES;
+            //availableTables = MAX_TABLES;
+            //maxOpenTime = MAX_OPENTIME;
+            //
+            //UpdateStatusLabels();
+            //
+            //timer.Tick += timer_Tick;
+        }
+
+        private void Waitress_LogThis(object sender, EventArgs e)
+        {
+            InsertInWaitressListbox((e as EventMessage).Message);
+        }
+
+        private void Bartender_LogThis(object sender, EventArgs e)
+        {
+            InsertInBartenderListbox((e as EventMessage).Message);
+        }
+
+        private void Patron_LogThis(object sender, EventArgs e)
+        {
+            InsertInPatronListbox((e as EventMessage).Message);
+        }
+
+        private void Bouncer_LogThis(object sender, EventArgs e)
+        {
+            InsertInPatronListbox((e as EventMessage).Message);
         }
 
         private void UpdateStatusLabels()
         {
-            lblGlasses.Content = $"There are {bar.AvailableGlasses} free Glasses ({bar.TotalGlassesInBar} total)";
-            lblPatrons.Content = $"There are {bar.PatronsInBar} Patrons in the bar";
-            lblTables.Content = $"There are {bar.AvailableTables} free Tables ({bar.TotalTablesInBar} total)";
+            Dispatcher.Invoke(() => lblGlasses.Content = $"There are {Bar.AvailableGlasses} free Glasses ({bar.TotalGlassesInBar} total)");
+            Dispatcher.Invoke(() => lblPatrons.Content = $"There are {Bar.PatronsInBar} Patrons in the bar");
+            Dispatcher.Invoke(() => lblTables.Content = $"There are {Bar.AvailableTables} free Tables ({bar.TotalTablesInBar} total)");
         }
 
         private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
@@ -88,19 +119,21 @@ namespace Lab6_Pub
 
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
         {
-            CloseBar(); 
+            bar.CloseBar();
+            //CloseBar(); 
         }
 
         private void BtnPausePatrons_Click(object sender, RoutedEventArgs e)
         {
-            if (!bouncerCTS.IsCancellationRequested)
-            {
-                bouncerCTS = new CancellationTokenSource();
-                StartBouncer(bouncerCTS.Token);
-            } else
-            {
-                bouncerCTS.Cancel();
-            }
+            bar.CancelBouncerAndPatrons();
+            //if (!bouncerCTS.IsCancellationRequested)
+            //{
+            //    bouncerCTS = new CancellationTokenSource();
+            //    StartBouncer(bouncerCTS.Token);
+            //} else
+            //{
+            //    bouncerCTS.Cancel();
+            //}
         }
 
         private void timer_Tick(object sender, EventArgs e)
@@ -123,8 +156,32 @@ namespace Lab6_Pub
         
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
-            if (open) CloseBar();
-            else OpenBar();
+            if (Bar.IsBarOpen) bar.CloseBar();
+            else bar.OpenBar();
+
+            //if (open) CloseBar();
+            //else OpenBar();
+        }
+
+        public void InsertInPatronListbox(string text)
+        {
+            Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{logIndex} - {text}"));
+            UpdateStatusLabels();
+            logIndex++;
+        }
+
+        public void InsertInWaitressListbox(string text)
+        {
+            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, $"{logIndex} - {text}"));
+            UpdateStatusLabels();
+            logIndex++;
+        }
+
+        public void InsertInBartenderListbox(string text)
+        {
+            Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"{logIndex} - {text}"));
+            UpdateStatusLabels();
+            logIndex++;
         }
 
         private void CloseBar()
@@ -195,7 +252,7 @@ namespace Lab6_Pub
                         var patron = beerQueue.ElementAt(0); 
                         bartender.PourBeer(patron);
                         beerQueue.RemoveAt(0); 
-                        patron.BeerDelivery();
+                        patron.GiveBeer();
                         Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"Poured a beer for {patron.Name}"));
                     }
                     else if (!bartenderIsWaiting)
