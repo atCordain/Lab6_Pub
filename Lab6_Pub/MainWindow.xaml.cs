@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Threading;
 using System.Windows.Threading;
 
 namespace Lab6_Pub
@@ -21,18 +17,41 @@ namespace Lab6_Pub
             btnPausePatrons.Click += BtnPausePatrons_Click;
             btnOpenClose.Click += BtnOpenClose_Click;
             btnStopAll.Click += BtnStopAll_Click;
-            //btnPauseBartender.Click += BtnPauseBartender_Click;
-            //btnPauseWaitress.Click += BtnPauseWaitress_Click;
+            btnPauseBartender.Click += BtnPauseBartender_Click;
+            btnPauseWaitress.Click += BtnPauseWaitress_Click;
+
             //btnIncreaseSpeed.Click += IncreaseSpeed_Click;
 
             Bouncer.LogThis += Bouncer_LogThis;
             Patron.LogThis += Patron_LogThis;
             Bartender.LogThis += Bartender_LogThis;
             Waitress.LogThis += Waitress_LogThis;
-
             bar = new Bar();
             bar.OpenBar();
+            bar.timer.Elapsed += Timer_Elapsed;
             UpdateStatusLabels();
+        }
+
+        private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
+        {
+            bar.PauseResumeWaitress();
+        }
+
+        private void BtnPauseBartender_Click(object sender, RoutedEventArgs e)
+        {
+            bar.PauseResumeBartender(); 
+        }
+
+        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            Dispatcher.Invoke(() => lblOpen.Content = $"Closes in: {Bar.OpenTimeLeft}");
+        }
+
+        private void UpdateStatusLabels()
+        {
+            Dispatcher.Invoke(() => lblGlasses.Content = $"There are {Bar.AvailableGlasses} free Glasses ({Bar.TotalGlassesInBar} total)");
+            Dispatcher.Invoke(() => lblPatrons.Content = $"There are {Bar.PatronsInBar} Patrons in the bar");
+            Dispatcher.Invoke(() => lblTables.Content = $"There are {Bar.AvailableTables} free Tables ({Bar.TotalTablesInBar} total)");
         }
 
         private void Waitress_LogThis(object sender, EventArgs e)
@@ -55,49 +74,38 @@ namespace Lab6_Pub
             InsertInPatronListbox((e as EventMessage).Message);
         }
 
-        private void UpdateStatusLabels()
-        {
-            Dispatcher.Invoke(() => lblGlasses.Content = $"There are {Bar.AvailableGlasses} free Glasses ({bar.TotalGlassesInBar} total)");
-            Dispatcher.Invoke(() => lblPatrons.Content = $"There are {Bar.PatronsInBar} Patrons in the bar");
-            Dispatcher.Invoke(() => lblTables.Content = $"There are {Bar.AvailableTables} free Tables ({bar.TotalTablesInBar} total)");
-        }
-
-
         private void BtnStopAll_Click(object sender, RoutedEventArgs e)
         {
-            bar.CloseBar();
+            bar.Cancel();
         }
 
         private void BtnPausePatrons_Click(object sender, RoutedEventArgs e)
         {
-            bar.CancelBouncerAndPatrons();
+            bar.PauseResumeBouncerPatrons();
         }
         
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
-            if (Bar.IsBarOpen) bar.CloseBar();
+            if (Bar.IsBarOpen) Bar.OpenTimeLeft = 1;
             else bar.OpenBar();
         }
 
         public void InsertInPatronListbox(string text)
         {
-            Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{logIndex} - {text}"));
+            Dispatcher.Invoke(() => lbPatrons.Items.Insert(0, $"{logIndex++} - {text}"));
             UpdateStatusLabels();
-            logIndex++;
         }
 
         public void InsertInWaitressListbox(string text)
         {
-            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, $"{logIndex} - {text}"));
+            Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, $"{logIndex++} - {text}"));
             UpdateStatusLabels();
-            logIndex++;
         }
 
         public void InsertInBartenderListbox(string text)
         {
-            Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"{logIndex} - {text}"));
+            Dispatcher.Invoke(() => lbBartender.Items.Insert(0, $"{logIndex++} - {text}"));
             UpdateStatusLabels();
-            logIndex++;
         }
     }
 }

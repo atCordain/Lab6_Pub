@@ -4,7 +4,9 @@
     {
         public abstract void Initialize();
         public abstract void Run();
-        public abstract void Cancel();
+        public abstract void Pause();
         public abstract void End();
+        public abstract bool IsActive { get; set; }
+
     }
 }

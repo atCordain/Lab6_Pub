@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,57 +12,67 @@ namespace Lab6_Pub
         private CancellationToken token;
 
         public static event EventHandler LogThis;
-
-        private Queue<Action> actions;
+        private bool isActive;
+        private Queue<Action> actionQueue;
 
         private Patron patronToServe;
 
         private const int TimeToPourBeer = 3;
+        private ConcurrentQueue<Patron> beerQueue;
 
-        public Bartender()
+        public override bool IsActive { get => isActive; set => isActive = value; }
+
+        public Bartender(ConcurrentQueue<Patron> beerQueue)
         {
-            actions = new Queue<Action>();
+            actionQueue = new Queue<Action>();
+            this.beerQueue = beerQueue;
             Initialize();
         }
 
         public override void Initialize()
         {
-            actions.Clear();
-            actions.Enqueue(TakeGlass);
-            actions.Enqueue(PourBeer);
-            actions.Enqueue(GiveBeer);
-            actions.Enqueue(Initialize);
+            actionQueue.Clear();
+            actionQueue.Enqueue(TakeGlass);
+            actionQueue.Enqueue(PourBeer);
+            actionQueue.Enqueue(GiveBeer);
+            actionQueue.Enqueue(Initialize);
         }
 
         public override void Run()
         {
+            isActive = true;
             cancellationTokenSource = new CancellationTokenSource();
             token = cancellationTokenSource.Token;
             Task.Run(() =>
             {
                 Action action;
-                while ((Bar.IsBarOpen || !Bar.IsBarEmpty()) && !token.IsCancellationRequested)
+                while (!token.IsCancellationRequested && (Bar.IsBarOpen || Bar.PatronsInBar > 0))
                 {
                     if (Bar.beerQueue.Count > 0)
                     {
-                        action = actions.Dequeue();
+                        action = actionQueue.Dequeue();
                         action();
                     }
-                    Thread.Sleep(Bar.DefaultWaitTime * 1000);
+                    Task.Delay(Bar.DefaultWaitTime * 1000);
                 }
-                End();
+                if (isActive) End();
             }, token);
         }
 
-        public override void Cancel()
+        public override void Pause()
         {
-            LogThis(this, new EventMessage($"Bartender went home (Cancel)"));
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"Bartender took a break"));
+            isActive = false;
         }
 
         public override void End()
         {
-            LogThis(this, new EventMessage($"Bartender went home (End)"));
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"Bartender left the bar"));
+            isActive = false;
         }
+
         public void TakeGlass()
         {
             if (Bar.AvailableGlasses > 0 && Bar.beerQueue.Count > 0)
@@ -82,7 +93,7 @@ namespace Lab6_Pub
 
         private void GiveBeer()
         {
-            Bar.beerQueue.TryDequeue(out patronToServe);
+            beerQueue.TryDequeue(out patronToServe);
             patronToServe.GiveBeer();
             LogThis(this, new EventMessage($"Poured a beer for {patronToServe.Name}"));
         }

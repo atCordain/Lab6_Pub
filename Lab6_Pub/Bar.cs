@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Timers;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,20 +11,23 @@ namespace Lab6_Pub
     {
         private const int totalGlassesInBar = 8;
         private const int totalTablesInBar = 9;
-        public int TotalGlassesInBar => totalGlassesInBar;
-        public int TotalTablesInBar => totalTablesInBar;
+        public static int TotalGlassesInBar => totalGlassesInBar;
+        public static int TotalTablesInBar => totalTablesInBar;
         public const int DefaultWaitTime = 1;
         private static int patronsInBar;
         private static bool isBarOpen;
         public static int AvailableGlasses { get; set; }
         public static int AvailableTables { get; set; }
-        public static int PatronsInBar => patronsInBar;
+        public static int PatronsInBar { get; set; }
         public static bool IsBarOpen => isBarOpen;
+
+        private const int MaxOpenTime = 120;
+        public static int OpenTimeLeft;
 
         public static int DirtyGlasses { get;  set; }
 
         // Agents
-        private static BlockingCollection<Agent> agents;
+        private static List<Agent> agents;
         private Bartender bartender;
         private Bouncer bouncer;
         private Waitress waitress;
@@ -32,12 +36,17 @@ namespace Lab6_Pub
         public static ConcurrentQueue<Patron> beerQueue = new ConcurrentQueue<Patron>();
         public static ConcurrentQueue<Patron> tableQueue = new ConcurrentQueue<Patron>();
 
+        public System.Timers.Timer timer;
+
+
+        // TODO: Speed increase, Use cases ()
         public Bar()
         {
-            agents = new BlockingCollection<Agent>();
-            bartender = new Bartender();
-            bouncer = new Bouncer(RunPatron);
-            waitress = new Waitress();
+        
+            agents = new List<Agent>();
+            bartender = new Bartender(beerQueue);
+            bouncer = new Bouncer(agents, beerQueue, tableQueue);
+            waitress = new Waitress(tableQueue);
             agents.Add(bartender);
             agents.Add(bouncer);
             agents.Add(waitress);
@@ -49,16 +58,32 @@ namespace Lab6_Pub
         public void OpenBar()
         {
             isBarOpen = true;
+            OpenTimeLeft = MaxOpenTime;
+            StartOpenTimer();
             Run();
+        }
+
+        private void StartOpenTimer()
+        {
+            timer = new System.Timers.Timer();
+            timer.Interval = 1000;
+            timer.Elapsed += OpenTimer_Elapsed;
+            timer.Start();
+        }
+        private void OpenTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            OpenTimeLeft--;
+            if (OpenTimeLeft <= 0)
+            {
+                timer.Stop();
+                CloseBar();
+            }
         }
 
         public void CloseBar()
         {
             isBarOpen = false;
-            foreach (var agent in agents)
-            {
-                agent.End();
-            }
+            bouncer.End();
         }
 
         public void Run()
@@ -73,45 +98,37 @@ namespace Lab6_Pub
         {
             foreach (var agent in agents)
             {
-                agent.Cancel();
-            }
-        }
-
-        public void CancelBartender()
-        {
-            bartender.Cancel();
-        }
-        public void CancelWaitress()
-        {
-            waitress.Cancel();
-        }
-
-        public void CancelBouncerAndPatrons()
-        {
-            bouncer.Cancel();
-            foreach (var agent in agents)
-            {
-                if (agent is Patron patron)
+                if (agent.IsActive)
                 {
-                    patron.Cancel();
+                    agent.Pause(); 
                 }
             }
         }
 
-        public void RunPatron(Patron patron)
+        public void PauseResumeBartender()
         {
-            agents.Add(patron);
-            patron.Run();
+            if (bartender.IsActive) bartender.Pause();
+            else bartender.Run();
+        }
+        public void PauseResumeWaitress()
+        {
+            if (waitress.IsActive) waitress.Pause();
+            else waitress.Run();
         }
 
-        internal static void JoinBeerQueue(Patron patron)
+        public void PauseResumeBouncerPatrons()
         {
-            beerQueue.Enqueue(patron);
-        }
+            if (bouncer.IsActive) bouncer.Pause();
+            else bouncer.Run();
 
-        internal static void JoinTableQueue(Patron patron)
-        {
-            tableQueue.Enqueue(patron);
+            foreach (var agent in agents)
+            {
+                if (agent is Patron patron)
+                {
+                    if (patron.IsActive) patron.Pause();
+                    else patron.Run();
+                }
+            }
         }
 
         internal static bool IsBarEmpty()

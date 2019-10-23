@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,11 +10,11 @@ namespace Lab6_Pub
     {
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken token;
-        
+        private bool isActive;
         public static event EventHandler LogThis;
-
-        private Queue<Action> actions;
-
+        private Queue<Action> actionQueue;
+        private ConcurrentQueue<Patron> beerQueue;
+        private ConcurrentQueue<Patron> tableQueue;
         private string name;
         private Random random = new Random();
         private bool hasBeer = false;
@@ -24,24 +25,27 @@ namespace Lab6_Pub
         private const int MinDrinkTime = 10;
         private const int DefaultCheckTime = 1;
 
-        public Patron(string name)
+        public Patron(string name, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
         {
-            actions = new Queue<Action>();
+            actionQueue = new Queue<Action>();
             this.name = name;
+            this.tableQueue = tableQueue;
+            this.beerQueue = beerQueue;
             Initialize();
         }
 
         public override void Initialize()
         {
-            actions.Enqueue(EnterBar);
-            actions.Enqueue(WaitForBeer);
-            actions.Enqueue(LookForTable);
-            actions.Enqueue(DrinkBeer);
-            actions.Enqueue(LeaveBar);
+            actionQueue.Enqueue(EnterBar);
+            actionQueue.Enqueue(WaitForBeer);
+            actionQueue.Enqueue(LookForTable);
+            actionQueue.Enqueue(DrinkBeer);
+            actionQueue.Enqueue(LeaveBar);
         }
 
         public override void Run()
         {
+            isActive = true;
             cancellationTokenSource = new CancellationTokenSource();
             token = cancellationTokenSource.Token;
 
@@ -49,69 +53,83 @@ namespace Lab6_Pub
 
             Task.Run(() =>
             {
-                while (!token.IsCancellationRequested && actions.Count > 0)
+                while (!token.IsCancellationRequested && actionQueue.Count > 0)
                 {
-                    action = actions.Dequeue();
+                    action = actionQueue.Dequeue();
                     action();
                 }
+                if (isActive) End();
+            });
 
-            }, token);
         }
 
-        public override void Cancel()
+        public override void Pause()
         {
             cancellationTokenSource.Cancel();
-            LogThis(this, new EventMessage($"{Name} left the bar (Cancel)"));
+            LogThis(this, new EventMessage($"{Name} took a break"));
+            isActive = false;
         }
 
         public override void End()
         {
-            //throw new NotImplementedException();
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"{Name} left the bar"));
+            isActive = false;
         }        
 
         public void EnterBar()
         {
-            Thread.Sleep((int)(TimeToEnter * 1000));
-            LogThis(this, new EventMessage($"{Name} waves hello"));
+            Bar.PatronsInBar += 1;
+            Thread.Sleep(TimeToEnter * 1000);
         }
 
         public void WaitForBeer()
         {
-            Bar.JoinBeerQueue(this);
-            while (!hasBeer)
+            beerQueue.Enqueue(this);
+            while (!token.IsCancellationRequested)
             {
-                Thread.Sleep((int)(DefaultCheckTime * 1000));
+                if (hasBeer)
+                {
+                    LogThis(this, new EventMessage($"{Name} got a beer"));
+                    break;
+                }
+                Thread.Sleep(DefaultCheckTime * 1000);
             }
-            LogThis(this, new EventMessage($"{Name} got a beer"));
         }
 
         public void LookForTable()
         {
-            Bar.JoinTableQueue(this);
-            while (!hasTable)
+            tableQueue.Enqueue(this);
+            while (!token.IsCancellationRequested)
             {
-                Thread.Sleep((int)(DefaultCheckTime * 1000));
+                if (hasTable)
+                {
+                    Thread.Sleep(TimeToWalkToTable * 1000);
+                    LogThis(this, new EventMessage($"{Name} got a table"));
+                    break;
+                }
+                Thread.Sleep(DefaultCheckTime * 1000);
             }
-            Thread.Sleep((int)(TimeToWalkToTable * 1000));
-            LogThis(this, new EventMessage($"{Name} got a table"));
         }
 
 
         public void DrinkBeer()
         {
             // slumpa 10-20 sec.
-            var beerDrinkTime = (int)((random.Next(MaxDrinkTime - MinDrinkTime) + MinDrinkTime) * 1000);
+            var beerDrinkTime = (random.Next(MaxDrinkTime - MinDrinkTime) + MinDrinkTime) * 1000;
             Thread.Sleep(beerDrinkTime);
-            LogThis(this, new EventMessage($"{Name} downed a beer in {beerDrinkTime} seconds"));
+            LogThis(this, new EventMessage($"{Name} downed a beer ({beerDrinkTime/1000}s)"));
 
         }
         private void LeaveBar()
         {
-            Bar.DirtyGlasses += 1;
-            LogThis(this, new EventMessage($"{Name} left the bar"));
+            Bar.DirtyGlasses++;
+            Bar.PatronsInBar--;
+            Bar.AvailableTables++;
         }
 
         public string Name { get => name; set => name = value; }
+        public override bool IsActive { get => isActive; set => isActive = value; }
 
         public void GiveBeer()
         {

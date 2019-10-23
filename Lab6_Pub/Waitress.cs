@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,35 +13,41 @@ namespace Lab6_Pub
 
         public static event EventHandler LogThis;
 
-        private Queue<Action> actions;
+        private bool isActive;
+        private Queue<Action> actionQueue;
         private Patron patronToServe;
         private int timeToPickUpDirtyGlasses = 3;
         private int timeToWashDirtyGlasses = 3;
         int dirtyGlasses, cleanGlasses;
+        private ConcurrentQueue<Patron> tableQueue;
 
-        public Waitress()
+        public override bool IsActive { get => isActive; set => isActive = value; }
+
+        public Waitress(ConcurrentQueue<Patron> tableQueue)
         {
-            actions = new Queue<Action>();
+            this.tableQueue = tableQueue;
+            actionQueue = new Queue<Action>();
             Initialize();
         }
 
         public override void Initialize()
         {
-            actions.Clear();
-            actions.Enqueue(PickUpDirtyGlasses);
-            actions.Enqueue(WashDirtyGlasses);
-            actions.Enqueue(PutCleanGlassesOnShelf);
-            actions.Enqueue(Initialize);
+            actionQueue.Clear();
+            actionQueue.Enqueue(PickUpDirtyGlasses);
+            actionQueue.Enqueue(WashDirtyGlasses);
+            actionQueue.Enqueue(PutCleanGlassesOnShelf);
+            actionQueue.Enqueue(Initialize);
         }
 
         public override void Run()
         {
+            isActive = true;
             cancellationTokenSource = new CancellationTokenSource();
             token = cancellationTokenSource.Token;
             Task.Run(() =>
             {
                 Action action;
-                while ((Bar.IsBarOpen || !Bar.IsBarEmpty()) && !token.IsCancellationRequested)
+                while ((Bar.IsBarOpen || Bar.PatronsInBar > 0 || Bar.AvailableGlasses < Bar.TotalGlassesInBar) && !token.IsCancellationRequested)
                 {
                     if (Bar.tableQueue.Count > 0 && Bar.AvailableTables > 0)
                     {
@@ -48,31 +55,35 @@ namespace Lab6_Pub
                     }
                     else if (Bar.DirtyGlasses > 0 || dirtyGlasses > 0)
                     {
-                        action = actions.Dequeue();
+                        action = actionQueue.Dequeue();
                         action();
                     }
                     Thread.Sleep(Bar.DefaultWaitTime * 1000);
                 }
-                End();
+                if (isActive) End();
             }, token);
         }
 
-        private void ShowPatronToTable()
-        {
-            Bar.tableQueue.TryDequeue(out patronToServe);
-            patronToServe.GiveTable();
-            Bar.AvailableTables -= 1;
-            LogThis(this, new EventMessage($"Gave {patronToServe.Name} a table"));
-        }
 
-        public override void Cancel()
+        public override void Pause()
         {
-            //throw new System.NotImplementedException();
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"Waitress took a break"));
+            isActive = false;
         }
 
         public override void End()
         {
-            //throw new System.NotImplementedException();
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"Waitress left the bar"));
+            isActive = false;
+        }
+        private void ShowPatronToTable()
+        {
+            tableQueue.TryDequeue(out patronToServe);
+            patronToServe.GiveTable();
+            Bar.AvailableTables -= 1;
+            LogThis(this, new EventMessage($"Gave {patronToServe.Name} a table"));
         }
 
         private void PickUpDirtyGlasses()
