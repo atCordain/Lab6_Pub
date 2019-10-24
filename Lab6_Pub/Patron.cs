@@ -1,87 +1,145 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Lab6_Pub
 {
-    public class Patron
+    public class Patron : Agent
     {
-        private string name;
+        public static event EventHandler LogThis;
+        public string Name { get => name; set => name = value; }
+        public override bool IsActive { get => isActive; set => isActive = value; }
+        public override float SimulationSpeed { get; set; }
+        public static int PatronSpeed = 1;
+
+        private CancellationTokenSource cancellationTokenSource;
+        private CancellationToken token;
+        
+        private Queue<Action> actionQueue;
+        private ConcurrentQueue<Patron> beerQueue;
+        private ConcurrentQueue<Patron> tableQueue;
         private Random random = new Random();
+        
+        private string name;
         private bool hasBeer = false;
         private bool hasTable = false;
-        private const int BEER_CHECK_TIME = 1;
-        private const int ENTER_WAIT_TIME = 1;
-        private const int WALK_TO_TABLE_TIME = 4;
-        private const int MAX_DRINKTIME = 20;
-        private const int MIN_DRINKTIME = 10;
-        private const int DEFAULT_CHECK_TIME = 1;
-        private List<Patron> beerQueue;
-        private CancellationToken cancellationToken;
-        private double speed = 1;
+        private bool isActive;
 
-        public Patron(string name)
+        private const int TimeToEnter = 1;
+        private const int TimeToWalkToTable = 4;
+        private const int MaxDrinkTime = 20;
+        private const int MinDrinkTime = 10;
+        private const int DefaultCheckTime = 1;
+        public Patron(string name, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
         {
+            SimulationSpeed = 1f;
+            actionQueue = new Queue<Action>();
             this.name = name;
+            this.tableQueue = tableQueue;
+            this.beerQueue = beerQueue;
+            Initialize();
         }
+
+        public override void Initialize()
+        {
+            actionQueue.Enqueue(EnterBar);
+            actionQueue.Enqueue(WaitForBeer);
+            actionQueue.Enqueue(LookForTable);
+            actionQueue.Enqueue(DrinkBeer);
+            actionQueue.Enqueue(LeaveBar);
+        }
+
+        public override void Run()
+        {
+            isActive = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            token = cancellationTokenSource.Token;
+
+            Action action;
+            Task.Run(() =>
+            {
+                while (!token.IsCancellationRequested && actionQueue.Count > 0)
+                {
+                    action = actionQueue.Dequeue();
+                    action();
+                }
+                if (isActive) End();
+            });
+        }
+
+        public override void Pause()
+        {
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"{Name} took a break"));
+            isActive = false;
+        }
+
+        public override void End()
+        {
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"{Name} left the bar"));
+            isActive = false;
+        }        
 
         public void EnterBar()
         {
-            Thread.Sleep((int)(ENTER_WAIT_TIME * speed * 1000));
+            Bar.PatronsInBar += 1;
+            Thread.Sleep((int)(TimeToEnter * PatronSpeed * SimulationSpeed * 1000));
         }
 
         public void WaitForBeer()
         {
-            MainWindow.JoinBeerQueue(this);
-            while (!hasBeer)
+            beerQueue.Enqueue(this);
+            while (!token.IsCancellationRequested)
             {
-                Thread.Sleep((int)(BEER_CHECK_TIME * speed * 1000));
+                if (hasBeer)
+                {
+                    LogThis(this, new EventMessage($"{Name} got a beer"));
+                    break;
+                }
+                Thread.Sleep((int)(DefaultCheckTime * PatronSpeed * SimulationSpeed * 1000));
             }
         }
 
         public void LookForTable()
         {
-            while (!hasTable)
+            tableQueue.Enqueue(this);
+            while (!token.IsCancellationRequested)
             {
-                if (MainWindow.availableTables > 0) 
+                if (hasTable)
                 {
-                    hasTable = true;
-                    MainWindow.availableTables -= 1;
+                    Thread.Sleep((int)(TimeToWalkToTable * PatronSpeed * SimulationSpeed * 1000));
+                    LogThis(this, new EventMessage($"{Name} got a table"));
+                    break;
                 }
-                Thread.Sleep((int)(DEFAULT_CHECK_TIME * speed * 1000));
+                Thread.Sleep((int)(DefaultCheckTime * PatronSpeed * SimulationSpeed * 1000));
             }
-            Thread.Sleep((int)(WALK_TO_TABLE_TIME * speed *  1000));
-        }
-
-        public string Sit()
-        {
-            return $"{Name} sat at a table";
         }
 
         public void DrinkBeer()
         {
-            // slumpa 10-20 sec.
-            Thread.Sleep((int)((random.Next(MAX_DRINKTIME - MIN_DRINKTIME) + MIN_DRINKTIME) * speed * 1000));
+            var beerDrinkTime = (int)((random.Next(MaxDrinkTime - MinDrinkTime) + MinDrinkTime) * PatronSpeed * SimulationSpeed * 1000);
+            Thread.Sleep(beerDrinkTime);
+            LogThis(this, new EventMessage($"{Name} downed a beer ({beerDrinkTime/1000}s)"));
         }
-        public string Leave()
+
+        private void LeaveBar()
         {
-            MainWindow.dirtyGlasses += 1;
-            MainWindow.availableTables += 1;
-            return $"{Name} left the bar.";
+            Bar.DirtyGlasses++;
+            Bar.PatronsInBar--;
+            Bar.AvailableTables++;
         }
 
-        public void SetSpeed(double speed)
-        {
-            this.speed = speed;
-        }
-
-        public string Name { get => name; set => name = value; }
-        public List<Patron> BeerQueue { get => beerQueue; set => beerQueue = value; }
-        public CancellationToken CancellationToken { get => cancellationToken; set => cancellationToken = value; }
-
-        public void BeerDelivery()
+        public void GiveBeer()
         {
             hasBeer = true;
+        }
+
+        public void GiveTable()
+        {
+            hasTable = true;
         }
     }
 }

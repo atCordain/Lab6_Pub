@@ -1,46 +1,112 @@
-﻿
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Lab6_Pub
 {
-    public class Waitress
+    public class Waitress : Agent
     {
-        private int TIME_TO_PICKUP_GLASS = 3;
-        private int TIME_TO_WASH_GLASS = 3;
-        int dirtyGlasses, cleanGlasses;
-        private double speed = 1;
+        public static event EventHandler LogThis;
+        public override bool IsActive { get => isActive; set => isActive = value; }
+        public override float SimulationSpeed { get; set; }
 
-        public Waitress()
+        private CancellationTokenSource cancellationTokenSource;
+        private CancellationToken token;
+
+        private int timeToPickUpDirtyGlasses = 3;
+        private int timeToWashDirtyGlasses = 3;
+        
+        private int dirtyGlasses, cleanGlasses;
+        
+        private bool isActive;
+        
+        private Queue<Action> actionQueue;
+        private Patron patronToServe;
+        private ConcurrentQueue<Patron> tableQueue;
+        
+        public Waitress(ConcurrentQueue<Patron> tableQueue)
         {
-
+            SimulationSpeed = 1;
+            this.tableQueue = tableQueue;
+            actionQueue = new Queue<Action>();
+            Initialize();
         }
 
-        public void PickUpglasses(ref int dirtyGlasses)
+        public override void Initialize()
         {
-            Thread.Sleep((int)(TIME_TO_PICKUP_GLASS * speed * 1000));
-            this.dirtyGlasses = dirtyGlasses;
-
-            dirtyGlasses = 0; 
+            actionQueue.Clear();
+            actionQueue.Enqueue(PickUpDirtyGlasses);
+            actionQueue.Enqueue(WashDirtyGlasses);
+            actionQueue.Enqueue(PutCleanGlassesOnShelf);
+            actionQueue.Enqueue(Initialize);
         }
 
-        public void WashGlases()
+        public override void Run()
         {
-            Thread.Sleep((int)(TIME_TO_WASH_GLASS * speed * 1000));
+            isActive = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            token = cancellationTokenSource.Token;
+            Task.Run(() =>
+            {
+                Action action;
+                while ((Bar.IsBarOpen || Bar.PatronsInBar > 0 || Bar.AvailableGlasses < Bar.TotalGlassesInBar) && !token.IsCancellationRequested)
+                {
+                    if (Bar.tableQueue.Count > 0 && Bar.AvailableTables > 0)
+                    {
+                        ShowPatronToTable();
+                    }
+                    else if (Bar.DirtyGlasses > 0 || dirtyGlasses > 0)
+                    {
+                        action = actionQueue.Dequeue();
+                        action();
+                    }
+                    Thread.Sleep((int)(Bar.DefaultWaitTime * SimulationSpeed * 1000));
+                }
+                if (isActive) End();
+            }, token);
+        }
+
+        public override void Pause()
+        {
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"Waitress took a break"));
+            isActive = false;
+        }
+
+        public override void End()
+        {
+            cancellationTokenSource.Cancel();
+            LogThis(this, new EventMessage($"Waitress left the bar"));
+            isActive = false;
+        }
+        private void ShowPatronToTable()
+        {
+            tableQueue.TryDequeue(out patronToServe);
+            patronToServe.GiveTable();
+            Bar.AvailableTables -= 1;
+            LogThis(this, new EventMessage($"Gave {patronToServe.Name} a table"));
+        }
+
+        private void PickUpDirtyGlasses()
+        {
+            Thread.Sleep((int)(timeToPickUpDirtyGlasses * SimulationSpeed * 1000));
+            dirtyGlasses = Bar.DirtyGlasses;
+            Bar.DirtyGlasses = 0;
+            LogThis(this, new EventMessage($"Picked up {dirtyGlasses} dirty glasses"));
+        }
+        private void WashDirtyGlasses()
+        {
+            Thread.Sleep((int)(timeToWashDirtyGlasses * SimulationSpeed * 1000));
             cleanGlasses = dirtyGlasses;
+            LogThis(this, new EventMessage($"Washed the glasses"));
         }
-
-        public int PutOnShelf()
+        private void PutCleanGlassesOnShelf()
         {
-            return cleanGlasses;
-        }
-      
-        public string Leave()
-        {
-            return "Waitress has gone home";
-        }
-        public void SetSpeed(double speed)
-        {
-            this.speed = speed;
+            Bar.AvailableGlasses += cleanGlasses;
+            dirtyGlasses = 0;
+            LogThis(this, new EventMessage($"Put the clean glasses on shelf"));
         }
     }
 }
