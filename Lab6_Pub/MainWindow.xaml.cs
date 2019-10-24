@@ -97,7 +97,6 @@ namespace Lab6_Pub
         private void Waitress_LogThis(object sender, EventArgs e)
         {
             Dispatcher.Invoke(() => lbWaitress.Items.Insert(0, $"{logIndex++} - {(e as EventMessage).Message}"));
-
             UpdateStatusLabels();
         }
 
@@ -131,11 +130,21 @@ namespace Lab6_Pub
         
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
-            if (Bar.IsBarOpen) Bar.openTimeLeft = 1;
+            if (Bar.IsBarOpen) 
+            {
+                Bar.openTimeLeft = 1;
+                btnOpenClose.IsEnabled = false;
+                btnIncreaseSpeed.IsEnabled = false;
+                btnPauseBartender.IsEnabled = false;
+                btnPausePatrons.IsEnabled = false;
+                btnPauseWaitress.IsEnabled = false;
+                btnStopAll.IsEnabled = false;
+            } 
             else 
             {
                 bar.OpenBar();
                 bar.timer.Elapsed += Timer_Elapsed;
+                cbStartCondition.IsEnabled = false;
             };
         }
     }
