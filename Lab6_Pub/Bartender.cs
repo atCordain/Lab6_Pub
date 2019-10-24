@@ -8,22 +8,22 @@ namespace Lab6_Pub
 {
     public class Bartender : Agent
     {
+        public override bool IsActive { get => isActive; set => isActive = value; }
+        public override float SimulationSpeed { get; set; }
+        public static event EventHandler LogThis;
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken token;
 
-        public static event EventHandler LogThis;
+        private const int TimeToPourBeer = 3;
         private bool isActive;
         private Queue<Action> actionQueue;
 
         private Patron patronToServe;
-
-        private const int TimeToPourBeer = 3;
         private ConcurrentQueue<Patron> beerQueue;
-
-        public override bool IsActive { get => isActive; set => isActive = value; }
 
         public Bartender(ConcurrentQueue<Patron> beerQueue)
         {
+            SimulationSpeed = 1;
             actionQueue = new Queue<Action>();
             this.beerQueue = beerQueue;
             Initialize();
@@ -53,7 +53,7 @@ namespace Lab6_Pub
                         action = actionQueue.Dequeue();
                         action();
                     }
-                    Task.Delay(Bar.DefaultWaitTime * 1000);
+                    Task.Delay((int)(Bar.DefaultWaitTime *SimulationSpeed * 1000));
                 }
                 if (isActive) End();
             }, token);
@@ -82,13 +82,13 @@ namespace Lab6_Pub
             }
             else
             {
-                Thread.Sleep(Bar.DefaultWaitTime * 1000);
+                Thread.Sleep((int)(Bar.DefaultWaitTime * SimulationSpeed *  1000));
                 Initialize();
             }
         }
         private void PourBeer()
         {
-            Thread.Sleep(TimeToPourBeer * 1000);
+            Thread.Sleep((int)(TimeToPourBeer * SimulationSpeed * 1000));
         }
 
         private void GiveBeer()

@@ -8,25 +8,33 @@ namespace Lab6_Pub
 {
     public class Patron : Agent
     {
+        public static event EventHandler LogThis;
+        public string Name { get => name; set => name = value; }
+        public override bool IsActive { get => isActive; set => isActive = value; }
+        public override float SimulationSpeed { get; set; }
+        public static int PatronSpeed = 1;
+
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken token;
-        private bool isActive;
-        public static event EventHandler LogThis;
+        
         private Queue<Action> actionQueue;
         private ConcurrentQueue<Patron> beerQueue;
         private ConcurrentQueue<Patron> tableQueue;
-        private string name;
         private Random random = new Random();
+        
+        private string name;
         private bool hasBeer = false;
         private bool hasTable = false;
+        private bool isActive;
+
         private const int TimeToEnter = 1;
         private const int TimeToWalkToTable = 4;
         private const int MaxDrinkTime = 20;
         private const int MinDrinkTime = 10;
         private const int DefaultCheckTime = 1;
-
         public Patron(string name, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
         {
+            SimulationSpeed = 1f;
             actionQueue = new Queue<Action>();
             this.name = name;
             this.tableQueue = tableQueue;
@@ -50,7 +58,6 @@ namespace Lab6_Pub
             token = cancellationTokenSource.Token;
 
             Action action;
-
             Task.Run(() =>
             {
                 while (!token.IsCancellationRequested && actionQueue.Count > 0)
@@ -60,7 +67,6 @@ namespace Lab6_Pub
                 }
                 if (isActive) End();
             });
-
         }
 
         public override void Pause()
@@ -80,7 +86,7 @@ namespace Lab6_Pub
         public void EnterBar()
         {
             Bar.PatronsInBar += 1;
-            Thread.Sleep(TimeToEnter * 1000);
+            Thread.Sleep((int)(TimeToEnter * PatronSpeed * SimulationSpeed * 1000));
         }
 
         public void WaitForBeer()
@@ -93,7 +99,7 @@ namespace Lab6_Pub
                     LogThis(this, new EventMessage($"{Name} got a beer"));
                     break;
                 }
-                Thread.Sleep(DefaultCheckTime * 1000);
+                Thread.Sleep((int)(DefaultCheckTime * PatronSpeed * SimulationSpeed * 1000));
             }
         }
 
@@ -104,32 +110,27 @@ namespace Lab6_Pub
             {
                 if (hasTable)
                 {
-                    Thread.Sleep(TimeToWalkToTable * 1000);
+                    Thread.Sleep((int)(TimeToWalkToTable * PatronSpeed * SimulationSpeed * 1000));
                     LogThis(this, new EventMessage($"{Name} got a table"));
                     break;
                 }
-                Thread.Sleep(DefaultCheckTime * 1000);
+                Thread.Sleep((int)(DefaultCheckTime * PatronSpeed * SimulationSpeed * 1000));
             }
         }
 
-
         public void DrinkBeer()
         {
-            // slumpa 10-20 sec.
-            var beerDrinkTime = (random.Next(MaxDrinkTime - MinDrinkTime) + MinDrinkTime) * 1000;
+            var beerDrinkTime = (int)((random.Next(MaxDrinkTime - MinDrinkTime) + MinDrinkTime) * PatronSpeed * SimulationSpeed * 1000);
             Thread.Sleep(beerDrinkTime);
             LogThis(this, new EventMessage($"{Name} downed a beer ({beerDrinkTime/1000}s)"));
-
         }
+
         private void LeaveBar()
         {
             Bar.DirtyGlasses++;
             Bar.PatronsInBar--;
             Bar.AvailableTables++;
         }
-
-        public string Name { get => name; set => name = value; }
-        public override bool IsActive { get => isActive; set => isActive = value; }
 
         public void GiveBeer()
         {

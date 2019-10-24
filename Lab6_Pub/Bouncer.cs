@@ -9,22 +9,27 @@ namespace Lab6_Pub
     public class Bouncer : Agent
     {
         public static event EventHandler LogThis;
-        private bool isActive;
+        public override bool IsActive { get => isActive; set => isActive = value; }
+        public override float SimulationSpeed { get; set; }
+        
+        public bool couplesNight = false;
+        public bool busLoad = false;
+
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken token;
 
-        private int MaxEntryTime = 15;
-        private int MinEntryTime = 10;
+        private bool isActive;
+        private int maxEntryTime = 15;
+        private int minEntryTime = 10;
 
         private Random random = new Random();
         private List<Agent> agents;
         private ConcurrentQueue<Patron> beerQueue;
         private ConcurrentQueue<Patron> tableQueue;
 
-        public override bool IsActive { get => isActive; set => isActive = value; }
-
         public Bouncer(List<Agent> agents, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
         {
+            SimulationSpeed = 1;
             this.agents = agents;
             this.beerQueue = beerQueue;
             this.tableQueue = tableQueue;
@@ -32,7 +37,6 @@ namespace Lab6_Pub
 
         public override void Initialize()
         {
-            throw new NotImplementedException();
         }
 
         public override void Run()
@@ -45,7 +49,7 @@ namespace Lab6_Pub
                 while (!token.IsCancellationRequested && Bar.IsBarOpen)
                 {
                     LetPatronIn();
-                    Thread.Sleep(random.Next(MaxEntryTime - MinEntryTime) + MinEntryTime * 1000);
+                    Thread.Sleep((int)(random.Next(maxEntryTime - minEntryTime) + minEntryTime * SimulationSpeed * 1000));
                 }
                 if (isActive) End();
             }, token);
@@ -53,11 +57,27 @@ namespace Lab6_Pub
 
         private void LetPatronIn()
         {
+            if (busLoad && (Bar.maxOpenTime - Bar.openTimeLeft) > 20)
+            {
+                for (int i = 0; i < 15; i++) 
+                {
+                    CreateAndRunPatron();
+                } 
+                busLoad = false;
+            }
+            else CreateAndRunPatron();
+            if (couplesNight) CreateAndRunPatron();
+        }
+
+        private void CreateAndRunPatron()
+        {
             var patron = new Patron(GetPatronName(), beerQueue, tableQueue);
             agents.Add(patron);
+            patron.SimulationSpeed = SimulationSpeed;
             patron.Run();
             LogThis(this, new EventMessage($"{patron.Name} entered the bar"));
         }
+
         private string GetPatronName()
         {
             string[] names = { "Johan", "Tommy", "Petter", "Calle", "Kolle", "Per", "Nisse", "Frippe", "Machmud", "Jonna", "Sara" };
@@ -74,7 +94,7 @@ namespace Lab6_Pub
         public override void End()
         {
             cancellationTokenSource.Cancel();
-            LogThis(this, new EventMessage($"Bouncer went home (End)"));
+            LogThis(this, new EventMessage($"Bouncer went home"));
             isActive = false;
         }
     }

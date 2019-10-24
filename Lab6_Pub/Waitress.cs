@@ -8,23 +8,27 @@ namespace Lab6_Pub
 {
     public class Waitress : Agent
     {
+        public static event EventHandler LogThis;
+        public override bool IsActive { get => isActive; set => isActive = value; }
+        public override float SimulationSpeed { get; set; }
+
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken token;
 
-        public static event EventHandler LogThis;
-
-        private bool isActive;
-        private Queue<Action> actionQueue;
-        private Patron patronToServe;
         private int timeToPickUpDirtyGlasses = 3;
         private int timeToWashDirtyGlasses = 3;
-        int dirtyGlasses, cleanGlasses;
+        
+        private int dirtyGlasses, cleanGlasses;
+        
+        private bool isActive;
+        
+        private Queue<Action> actionQueue;
+        private Patron patronToServe;
         private ConcurrentQueue<Patron> tableQueue;
-
-        public override bool IsActive { get => isActive; set => isActive = value; }
-
+        
         public Waitress(ConcurrentQueue<Patron> tableQueue)
         {
+            SimulationSpeed = 1;
             this.tableQueue = tableQueue;
             actionQueue = new Queue<Action>();
             Initialize();
@@ -58,12 +62,11 @@ namespace Lab6_Pub
                         action = actionQueue.Dequeue();
                         action();
                     }
-                    Thread.Sleep(Bar.DefaultWaitTime * 1000);
+                    Thread.Sleep((int)(Bar.DefaultWaitTime * SimulationSpeed * 1000));
                 }
                 if (isActive) End();
             }, token);
         }
-
 
         public override void Pause()
         {
@@ -88,14 +91,14 @@ namespace Lab6_Pub
 
         private void PickUpDirtyGlasses()
         {
-            Thread.Sleep((int)(timeToPickUpDirtyGlasses * 1000));
+            Thread.Sleep((int)(timeToPickUpDirtyGlasses * SimulationSpeed * 1000));
             dirtyGlasses = Bar.DirtyGlasses;
             Bar.DirtyGlasses = 0;
             LogThis(this, new EventMessage($"Picked up {dirtyGlasses} dirty glasses"));
         }
         private void WashDirtyGlasses()
         {
-            Thread.Sleep((int)(timeToWashDirtyGlasses * 1000));
+            Thread.Sleep((int)(timeToWashDirtyGlasses * SimulationSpeed * 1000));
             cleanGlasses = dirtyGlasses;
             LogThis(this, new EventMessage($"Washed the glasses"));
         }
