@@ -26,7 +26,7 @@ namespace Lab6_Pub
         private bool hasBeer = false;
         private bool hasTable = false;
         private bool isActive;
-
+        private bool beerIsFinished;
         private const int TimeToEnter = 1;
         private const int TimeToWalkToTable = 4;
         private const int MaxDrinkTime = 20;
@@ -35,6 +35,7 @@ namespace Lab6_Pub
         public Patron(string name, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
         {
             SimulationSpeed = 1f;
+            beerIsFinished = false;
             actionQueue = new Queue<Action>();
             this.name = name;
             this.tableQueue = tableQueue;
@@ -45,10 +46,13 @@ namespace Lab6_Pub
         public override void Initialize()
         {
             actionQueue.Enqueue(EnterBar);
+            actionQueue.Enqueue(JoinBeerQueue);
             actionQueue.Enqueue(WaitForBeer);
-            actionQueue.Enqueue(LookForTable);
+            actionQueue.Enqueue(JoinTableQueue);
+            actionQueue.Enqueue(WaitForTable);
             actionQueue.Enqueue(DrinkBeer);
             actionQueue.Enqueue(LeaveBar);
+            actionQueue.Enqueue(End);
         }
 
         public override void Run()
@@ -65,22 +69,29 @@ namespace Lab6_Pub
                     action = actionQueue.Dequeue();
                     action();
                 }
-                if (isActive) End();
             });
         }
 
         public override void Pause()
         {
+            isActive = false;
             cancellationTokenSource.Cancel();
             LogThis(this, new EventMessage($"{Name} took a break"));
-            isActive = false;
         }
 
         public override void End()
         {
-            cancellationTokenSource.Cancel();
-            LogThis(this, new EventMessage($"{Name} left the bar"));
-            isActive = false;
+            if (beerIsFinished)
+            {
+                isActive = false;
+                cancellationTokenSource.Cancel();
+                LogThis(this, new EventMessage($"{Name} left the bar"));
+            }
+            else
+            {
+                actionQueue.Enqueue(End);
+            }
+            
         }        
 
         public void EnterBar()
@@ -91,7 +102,6 @@ namespace Lab6_Pub
 
         public void WaitForBeer()
         {
-            beerQueue.Enqueue(this);
             while (!token.IsCancellationRequested)
             {
                 if (hasBeer)
@@ -103,9 +113,13 @@ namespace Lab6_Pub
             }
         }
 
-        public void LookForTable()
+        private void JoinBeerQueue()
         {
-            tableQueue.Enqueue(this);
+            beerQueue.Enqueue(this);
+        }
+
+        public void WaitForTable()
+        {
             while (!token.IsCancellationRequested)
             {
                 if (hasTable)
@@ -118,11 +132,17 @@ namespace Lab6_Pub
             }
         }
 
+        private void JoinTableQueue()
+        {
+            tableQueue.Enqueue(this);
+        }
+
         public void DrinkBeer()
         {
             var beerDrinkTime = (int)((random.Next(MaxDrinkTime - MinDrinkTime) + MinDrinkTime) * PatronSpeed * SimulationSpeed * 1000);
             Thread.Sleep(beerDrinkTime);
             LogThis(this, new EventMessage($"{Name} downed a beer ({beerDrinkTime/1000}s)"));
+            beerIsFinished = true;
         }
 
         private void LeaveBar()
