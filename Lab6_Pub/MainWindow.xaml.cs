@@ -10,6 +10,7 @@ namespace Lab6_Pub
     {
         private Bar bar;
         private int logIndex;
+        private int speedUpdates;
 
         public MainWindow()
         {
@@ -69,7 +70,12 @@ namespace Lab6_Pub
         }
         private void IncreaseSpeed_Click(object sender, RoutedEventArgs e)
         {
-            bar.IncreaseSimulationSpeed();
+            if (speedUpdates < 2)
+            {
+                bar.IncreaseSimulationSpeed();
+                speedUpdates++;
+            }
+            else btnIncreaseSpeed.IsEnabled = false;
         }
 
         private void BtnPauseWaitress_Click(object sender, RoutedEventArgs e)
@@ -85,6 +91,15 @@ namespace Lab6_Pub
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             Dispatcher.Invoke(() => lblOpen.Content = $"Closes in: {Bar.openTimeLeft}");
+            if (Bar.openTimeLeft <= 0)
+            {
+                Dispatcher.Invoke(() => btnOpenClose.IsEnabled = false);
+                Dispatcher.Invoke(() => btnIncreaseSpeed.IsEnabled = false);
+                Dispatcher.Invoke(() => btnPauseBartender.IsEnabled = false);
+                Dispatcher.Invoke(() => btnPausePatrons.IsEnabled = false);
+                Dispatcher.Invoke(() => btnPauseWaitress.IsEnabled = false);
+                Dispatcher.Invoke(() => btnStopAll.IsEnabled = false);
+            }
         }
 
         private void UpdateStatusLabels()
