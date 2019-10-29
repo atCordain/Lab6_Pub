@@ -38,6 +38,7 @@ namespace Lab6_Pub
         public System.Timers.Timer timer;
         public static ConcurrentQueue<Patron> beerQueue = new ConcurrentQueue<Patron>();
         public static ConcurrentQueue<Patron> tableQueue = new ConcurrentQueue<Patron>();
+        private bool updateTime;
 
         public Bar()
         {
@@ -101,13 +102,22 @@ namespace Lab6_Pub
         }
         private void StartOpenTimer()
         {
-            timer.Interval = 1000;
+            // Interval is 500 and time update is every other timer.Elapsed because, 
+            // the UI also subscribe to timer.Elapsed and the UI update needs to be more often than 1 per second.
+            timer.Interval = 500;
             timer.Elapsed += OpenTimer_Elapsed;
+            updateTime = false;
             timer.Start();
         }
         private void OpenTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            openTimeLeft--;
+            if (updateTime)
+            {
+                openTimeLeft--;
+                updateTime = false;
+            }
+            else updateTime = true;
+            
             if (openTimeLeft <= 0)
             {
                 timer.Stop();
