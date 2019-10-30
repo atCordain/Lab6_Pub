@@ -19,13 +19,13 @@ namespace Lab6_Pub
         private Queue<Action> actionQueue;
 
         private Patron patronToServe;
-        private ConcurrentQueue<Patron> beerQueue;
+        private Bar bar;
 
-        public Bartender(ConcurrentQueue<Patron> beerQueue)
+        public Bartender(Bar bar)
         {
+            this.bar = bar;
             SimulationSpeed = 1;
             actionQueue = new Queue<Action>();
-            this.beerQueue = beerQueue;
             Initialize();
         }
 
@@ -46,9 +46,9 @@ namespace Lab6_Pub
             Task.Run(() =>
             {
                 Action action;
-                while (!token.IsCancellationRequested && (Bar.IsBarOpen || Bar.PatronsInBar > 0))
+                while (!token.IsCancellationRequested && (bar.IsBarOpen || bar.PatronsInBar > 0))
                 {
-                    if (Bar.beerQueue.Count > 0)
+                    if (bar.GetNumberOfPatronsInBeerQueue() > 0)
                     {
                         action = actionQueue.Dequeue();
                         action();
@@ -61,23 +61,23 @@ namespace Lab6_Pub
 
         public override void Pause()
         {
+            isActive = false;
             cancellationTokenSource.Cancel();
             LogThis(this, new EventMessage($"Bartender took a break"));
-            isActive = false;
         }
 
         public override void End()
         {
+            isActive = false;
             cancellationTokenSource.Cancel();
             LogThis(this, new EventMessage($"Bartender left the bar"));
-            isActive = false;
         }
 
         public void TakeGlass()
         {
-            if (Bar.AvailableGlasses > 0 && Bar.beerQueue.Count > 0)
+            if (bar.AvailableGlasses > 0 && bar.GetNumberOfPatronsInBeerQueue() > 0)
             {
-                Bar.AvailableGlasses -= 1;
+                bar.AvailableGlasses -= 1;
                 LogThis(this, new EventMessage($"Bartender goes to shelf"));
             }
             else
@@ -93,7 +93,7 @@ namespace Lab6_Pub
 
         private void GiveBeer()
         {
-            beerQueue.TryDequeue(out patronToServe);
+            patronToServe = bar.GetPatronToServeBeer();
             patronToServe.GiveBeer();
             LogThis(this, new EventMessage($"Poured a beer for {patronToServe.Name}"));
         }

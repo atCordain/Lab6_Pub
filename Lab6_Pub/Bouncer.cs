@@ -21,18 +21,13 @@ namespace Lab6_Pub
         private bool isActive;
         private int maxEntryTime = 15;
         private int minEntryTime = 10;
+        private Bar bar;
 
         private Random random = new Random();
-        private List<Agent> agents;
-        private ConcurrentQueue<Patron> beerQueue;
-        private ConcurrentQueue<Patron> tableQueue;
-
-        public Bouncer(List<Agent> agents, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
+        public Bouncer(Bar bar)
         {
+            this.bar = bar;
             SimulationSpeed = 1;
-            this.agents = agents;
-            this.beerQueue = beerQueue;
-            this.tableQueue = tableQueue;
         }
 
         public override void Initialize()
@@ -46,7 +41,7 @@ namespace Lab6_Pub
             token = cancellationTokenSource.Token;
             Task.Run(() => 
             {
-                while (!token.IsCancellationRequested && Bar.IsBarOpen)
+                while (!token.IsCancellationRequested && bar.IsBarOpen)
                 {
                     LetPatronIn();
                     Thread.Sleep((int)(random.Next(maxEntryTime - minEntryTime) + minEntryTime * SimulationSpeed * 1000));
@@ -57,7 +52,7 @@ namespace Lab6_Pub
 
         private void LetPatronIn()
         {
-            if (busLoad && (Bar.maxOpenTime - Bar.openTimeLeft) > 20)
+            if (busLoad && (bar.MaxOpenTime - bar.OpenTimeLeft) > 20)
             {
                 for (int i = 0; i < 15; i++) 
                 {
@@ -71,8 +66,8 @@ namespace Lab6_Pub
 
         private void CreateAndRunPatron()
         {
-            var patron = new Patron(GetPatronName(), beerQueue, tableQueue);
-            agents.Add(patron);
+            var patron = new Patron(GetPatronName(), bar);
+            bar.AddAgentToAgentList(patron);
             patron.SimulationSpeed = SimulationSpeed;
             patron.Run();
             LogThis(this, new EventMessage($"{patron.Name} entered the bar"));
