@@ -7,37 +7,48 @@ using System.Threading.Tasks;
 
 namespace Lab6_Pub
 {
-    class Bar
+    public class Bar
     {
-        public static int TotalGlassesInBar { get => totalGlassesInBar; set => totalGlassesInBar = value; }
-        public static int TotalTablesInBar { get => totalTablesInBar; set => totalTablesInBar = value; }
-        public static int AvailableGlasses { get; set; }
-        public static int DirtyGlasses { get;  set; }
-        public static int AvailableTables { get; set; }
-        public static int PatronsInBar { get; set; }
-        public static bool IsBarOpen => isBarOpen;
+        //Undvik statiska fält och properties som pesten, dom skadar skalningsbarheten av ett projekt på sikt. 
+        // FIXAT! ^^
+        public int TotalGlassesInBar { get => totalGlassesInBar; set => totalGlassesInBar = value; }
+        public int TotalTablesInBar { get => totalTablesInBar; set => totalTablesInBar = value; }
+        public int AvailableGlasses { get; set; }
+        public int DirtyGlasses { get;  set; }
+        public int AvailableTables { get; set; }
+        public int PatronsInBar { get; set; }
+        public bool IsBarOpen => isBarOpen;
+        public int MaxOpenTime { get => maxOpenTime; set => maxOpenTime = value; }
+        public int OpenTimeLeft { get => openTimeLeft; set => openTimeLeft = value; }
+
         public enum StartCondition { Standard, TwentyGlassThreeChairs, TwentyChairsFiveGlass, GuestStayDoubled, WaitresWorksDoubleSpeed, BarOpenFiveMinuites, CouplesNight, PatronBusLoad }
         public StartCondition startCondition;
-        
-        public static int maxOpenTime = 120;
-        public static int openTimeLeft;
+        public System.Timers.Timer timer;
         public const int DefaultWaitTime = 1;
+
+        private int maxOpenTime = 120;
+        private int openTimeLeft;
         private float simulationSpeed;
 
-        private static int totalGlassesInBar = 8;
-        private static int totalTablesInBar = 9;
-        private static int patronsInBar;
+        private int totalGlassesInBar = 8;
+        private int totalTablesInBar = 9;
+        private  int patronsInBar;
 
-        private static bool isBarOpen;
+        private bool isBarOpen;
 
-        private static List<Agent> agents;
+        private List<Agent> agents;
         private Bartender bartender;
         private Bouncer bouncer;
         private Waitress waitress;
 
-        public System.Timers.Timer timer;
-        public static ConcurrentQueue<Patron> beerQueue = new ConcurrentQueue<Patron>();
-        public static ConcurrentQueue<Patron> tableQueue = new ConcurrentQueue<Patron>();
+        private ConcurrentQueue<Patron> beerQueue = new ConcurrentQueue<Patron>();
+        private ConcurrentQueue<Patron> tableQueue = new ConcurrentQueue<Patron>();
+
+        internal int GetNumberOfPatronsInTableQueue()
+        {
+            return tableQueue.Count;
+        }
+
         private bool updateTime;
 
         public Bar()
@@ -47,9 +58,10 @@ namespace Lab6_Pub
             timer = new System.Timers.Timer();
             
             agents = new List<Agent>();
-            bartender = new Bartender(beerQueue);
-            bouncer = new Bouncer(agents, beerQueue, tableQueue);
-            waitress = new Waitress(tableQueue);
+            bartender = new Bartender(this);
+            bouncer = new Bouncer(this);
+            waitress = new Waitress(this);
+
             agents.Add(bartender);
             agents.Add(bouncer);
             agents.Add(waitress);
@@ -58,6 +70,23 @@ namespace Lab6_Pub
             AvailableTables = totalTablesInBar;
 
             isBarOpen = false;
+        }
+
+        internal void AddAgentToAgentList(Agent agent)
+        {
+            agents.Add(agent);
+        }
+
+        internal int GetNumberOfPatronsInBeerQueue()
+        {
+            return beerQueue.Count;
+        }
+
+        internal Patron GetPatronToServeTable()
+        {
+            Patron patron;
+            tableQueue.TryDequeue(out patron);
+            return patron;
         }
 
         public void OpenBar()
@@ -85,7 +114,7 @@ namespace Lab6_Pub
                     waitress.SimulationSpeed = waitress.SimulationSpeed / 2;
                     break;
                 case StartCondition.BarOpenFiveMinuites:
-                    maxOpenTime = 300;
+                    MaxOpenTime = 300;
                     break;
                 case StartCondition.CouplesNight:
                     bouncer.couplesNight = true;
@@ -96,10 +125,28 @@ namespace Lab6_Pub
                     break;
             }
             isBarOpen = true;
-            openTimeLeft = maxOpenTime;
+            OpenTimeLeft = MaxOpenTime;
             StartOpenTimer();
             Run();
         }
+
+        internal void JoinBeerQueue(Patron patron)
+        {
+            beerQueue.Enqueue(patron);
+        }
+        
+        public void JoinTableQueue(Patron patron)
+        {
+            tableQueue.Enqueue(patron);
+        }
+
+        public Patron GetPatronToServeBeer()
+        {
+            Patron patron;
+            beerQueue.TryDequeue(out patron);
+            return patron;
+        }
+
         private void StartOpenTimer()
         {
             // Interval is 500 and time update is every other timer.Elapsed because, 
@@ -113,12 +160,12 @@ namespace Lab6_Pub
         {
             if (updateTime)
             {
-                openTimeLeft--;
+                OpenTimeLeft--;
                 updateTime = false;
             }
             else updateTime = true;
             
-            if (openTimeLeft <= 0)
+            if (OpenTimeLeft <= 0)
             {
                 timer.Stop();
                 CloseBar();
@@ -166,7 +213,8 @@ namespace Lab6_Pub
             if (bouncer.IsActive) bouncer.Pause();
             else bouncer.Run();
 
-            foreach (var agent in agents)
+            // ToArray() för att undvika System.InvalidOperationException: 'Collection was modified; enumeration operation may not execute.'
+            foreach (var agent in agents.ToArray())
             {
                 if (agent is Patron patron)
                 {

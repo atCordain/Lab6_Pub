@@ -24,12 +24,12 @@ namespace Lab6_Pub
         
         private Queue<Action> actionQueue;
         private Patron patronToServe;
-        private ConcurrentQueue<Patron> tableQueue;
+        private Bar bar;
         
-        public Waitress(ConcurrentQueue<Patron> tableQueue)
+        public Waitress(Bar bar)
         {
             SimulationSpeed = 1;
-            this.tableQueue = tableQueue;
+            this.bar = bar;
             actionQueue = new Queue<Action>();
             Initialize();
         }
@@ -51,13 +51,13 @@ namespace Lab6_Pub
             Task.Run(() =>
             {
                 Action action;
-                while ((Bar.IsBarOpen || Bar.PatronsInBar > 0 || Bar.AvailableGlasses < Bar.TotalGlassesInBar) && !token.IsCancellationRequested)
+                while ((bar.IsBarOpen || bar.PatronsInBar > 0 || bar.AvailableGlasses < bar.TotalGlassesInBar) && !token.IsCancellationRequested)
                 {
-                    if (Bar.tableQueue.Count > 0 && Bar.AvailableTables > 0)
+                    if (bar.GetNumberOfPatronsInTableQueue() > 0 && bar.AvailableTables > 0)
                     {
                         ShowPatronToTable();
                     }
-                    else if (Bar.DirtyGlasses > 0 || dirtyGlasses > 0)
+                    else if (bar.DirtyGlasses > 0 || dirtyGlasses > 0)
                     {
                         action = actionQueue.Dequeue();
                         action();
@@ -83,17 +83,17 @@ namespace Lab6_Pub
         }
         private void ShowPatronToTable()
         {
-            tableQueue.TryDequeue(out patronToServe);
+            patronToServe = bar.GetPatronToServeTable();
             patronToServe.GiveTable();
-            Bar.AvailableTables -= 1;
+            bar.AvailableTables -= 1;
             LogThis(this, new EventMessage($"Gave {patronToServe.Name} a table"));
         }
 
         private void PickUpDirtyGlasses()
         {
             Thread.Sleep((int)(timeToPickUpDirtyGlasses * SimulationSpeed * 1000));
-            dirtyGlasses = Bar.DirtyGlasses;
-            Bar.DirtyGlasses = 0;
+            dirtyGlasses = bar.DirtyGlasses;
+            bar.DirtyGlasses = 0;
             LogThis(this, new EventMessage($"Picked up {dirtyGlasses} dirty glasses"));
         }
         private void WashDirtyGlasses()
@@ -104,7 +104,7 @@ namespace Lab6_Pub
         }
         private void PutCleanGlassesOnShelf()
         {
-            Bar.AvailableGlasses += cleanGlasses;
+            bar.AvailableGlasses += cleanGlasses;
             dirtyGlasses = 0;
             LogThis(this, new EventMessage($"Put the clean glasses on shelf"));
         }

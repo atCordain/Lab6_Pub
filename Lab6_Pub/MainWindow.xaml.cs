@@ -11,9 +11,10 @@ namespace Lab6_Pub
         private Bar bar;
         private int logIndex;
         private int speedUpdates;
-
+        
         public MainWindow()
         {
+            this.bar = new Bar();
             InitializeComponent();
             logIndex = 0;
             
@@ -31,9 +32,7 @@ namespace Lab6_Pub
             Patron.LogThis += Patron_LogThis;
             Bartender.LogThis += Bartender_LogThis;
             Waitress.LogThis += Waitress_LogThis;
-            
-            bar = new Bar();
-            
+
             UpdateStatusLabels();
         }
 
@@ -90,8 +89,8 @@ namespace Lab6_Pub
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            Dispatcher.Invoke(() => lblOpen.Content = $"Closes in: {Bar.openTimeLeft}");
-            if (Bar.openTimeLeft <= 0)
+            Dispatcher.Invoke(() => lblOpen.Content = $"Closes in: {bar.OpenTimeLeft}");
+            if (bar.OpenTimeLeft <= 0)
             {
                 Dispatcher.Invoke(() => btnOpenClose.IsEnabled = false);
                 Dispatcher.Invoke(() => btnIncreaseSpeed.IsEnabled = false);
@@ -104,9 +103,9 @@ namespace Lab6_Pub
 
         private void UpdateStatusLabels()
         {
-            Dispatcher.Invoke(() => lblGlasses.Content = $"There are {Bar.AvailableGlasses} free Glasses ({Bar.TotalGlassesInBar} total)");
-            Dispatcher.Invoke(() => lblPatrons.Content = $"There are {Bar.PatronsInBar} Patrons in the bar");
-            Dispatcher.Invoke(() => lblTables.Content = $"There are {Bar.AvailableTables} free Tables ({Bar.TotalTablesInBar} total)");
+            Dispatcher.Invoke(() => lblGlasses.Content = $"There are {bar.AvailableGlasses} free Glasses ({bar.TotalGlassesInBar} total)");
+            Dispatcher.Invoke(() => lblPatrons.Content = $"There are {bar.PatronsInBar} Patrons in the bar");
+            Dispatcher.Invoke(() => lblTables.Content = $"There are {bar.AvailableTables} free Tables ({bar.TotalTablesInBar} total)");
         }
 
         private void Waitress_LogThis(object sender, EventArgs e)
@@ -145,9 +144,9 @@ namespace Lab6_Pub
         
         private void BtnOpenClose_Click(object sender, RoutedEventArgs e)
         {
-            if (Bar.IsBarOpen) 
+            if (bar.IsBarOpen) 
             {
-                Bar.openTimeLeft = 1;
+                bar.OpenTimeLeft = 1;
                 btnOpenClose.IsEnabled = false;
                 btnIncreaseSpeed.IsEnabled = false;
                 btnPauseBartender.IsEnabled = false;

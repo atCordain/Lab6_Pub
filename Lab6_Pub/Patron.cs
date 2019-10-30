@@ -18,8 +18,7 @@ namespace Lab6_Pub
         private CancellationToken token;
         
         private Queue<Action> actionQueue;
-        private ConcurrentQueue<Patron> beerQueue;
-        private ConcurrentQueue<Patron> tableQueue;
+        private Bar bar;
         private Random random = new Random();
         
         private string name;
@@ -29,17 +28,16 @@ namespace Lab6_Pub
         private bool beerIsFinished;
         private const int TimeToEnter = 1;
         private const int TimeToWalkToTable = 4;
-        private const int MaxDrinkTime = 20;
-        private const int MinDrinkTime = 10;
+        private const int MaxDrinkTime = 30;
+        private const int MinDrinkTime = 20;
         private const int DefaultCheckTime = 1;
-        public Patron(string name, ConcurrentQueue<Patron> beerQueue, ConcurrentQueue<Patron> tableQueue)
+        public Patron(string name, Bar bar)
         {
+            this.name = name;
+            this.bar = bar;
             SimulationSpeed = 1f;
             beerIsFinished = false;
             actionQueue = new Queue<Action>();
-            this.name = name;
-            this.tableQueue = tableQueue;
-            this.beerQueue = beerQueue;
             Initialize();
         }
 
@@ -96,7 +94,7 @@ namespace Lab6_Pub
 
         public void EnterBar()
         {
-            Bar.PatronsInBar += 1;
+            bar.PatronsInBar += 1;
             Thread.Sleep((int)(TimeToEnter * PatronSpeed * SimulationSpeed * 1000));
         }
 
@@ -115,7 +113,7 @@ namespace Lab6_Pub
 
         private void JoinBeerQueue()
         {
-            beerQueue.Enqueue(this);
+            bar.JoinBeerQueue(this);
         }
 
         public void WaitForTable()
@@ -134,7 +132,7 @@ namespace Lab6_Pub
 
         private void JoinTableQueue()
         {
-            tableQueue.Enqueue(this);
+            bar.JoinTableQueue(this);
         }
 
         public void DrinkBeer()
@@ -147,9 +145,9 @@ namespace Lab6_Pub
 
         private void LeaveBar()
         {
-            Bar.DirtyGlasses++;
-            Bar.PatronsInBar--;
-            Bar.AvailableTables++;
+            bar.DirtyGlasses++;
+            bar.PatronsInBar--;
+            bar.AvailableTables++;
         }
 
         public void GiveBeer()
